@@ -1,48 +1,62 @@
+# A warm welcome to the `fdaPDE` world!
+
+`fdaPDE` is a library for *physics-informed spatial and functional data analysis*, at the intersection of statistics and numerical analysis, designed for data located over *complex multidimensional domains*,
+ ranging from irregular planar regions and curved surfaces to linear networks and volumes. The use of Partial Differential Equations (PDEs) allows incorporating information derived from the *physics* of 
+ the problem under study into the *statistical modeling*, making `fdaPDE` an extremely flexible tool for the analysis of complex data.
+
+`fdaPDE` offers a wide range of modeling capabilities -- including regression, nonparametric density estimation, functional data analysis, and more -- for data located over a spatial domain, possibly evolving over time.
+
 # Getting Started
 
-`fdaPDE` is a C++ library that interfaces with **R**, one of the most popular languages for data analysis. It runs on all major platforms: **Linux**, **macOS**, and **Windows**.
-
-The development version of the library has **strict system requirements**, which may be difficult to satisfy manually. In particular, the package must be built using **GCC version 15**, which is not available in some commonly used Linux distributions, such as Ubuntu, nor is it easily installed on macOS. To simplify installation, we provide a Docker image containing a pre-configured environment running the R package [`fdaPDE-R`](https://github.com/fdaPDE/fdaPDE-R).
+`fdaPDE` is a C++ library with an interface to **R**, one of the most widely used languages for data analysis. 
+It runs on all major platforms (**Linux**, **macOS**, and **Windows**) and has been available on CRAN for nearly 10 years.
+We are currently developing a new version of the library, available [here](https://github.com/fdaPDE/fdaPDE-R), 
+which introduces major improvements but also comes with stricter system requirements. 
+Specifically, it must be built using **GCC version 15**, which is not readily available in some popular Linux distributions (e.g., **Ubuntu**) and is difficult to install on **macOS**.
+We are actively working to relax these requirements to make the build process easier. Meanwhile, we provide a **Docker** image 
+with a fully configured environment that includes the development version of the package.
 
 ---
 
 ## Recommended Setup
 
-* **macOS** and **Linux** users: We strongly recommend using the Docker image.
-* **Windows** users: You can either:
+* **macOS** and **Linux** users: we strongly recommend using the **Docker** image.
 
-  * If your machine supports **R version ≥ 4.5.0**, install it along with [RTools45](https://cran.r-project.org/bin/windows/Rtools/). This is the preferred approach, if compatible.
-  * Alternatively, use the Docker image (requires WSL – see instructions below).
+* **Windows** users: 
+
+  * If your machine supports **R version $\geq$ 4.5.0** (for reference, R version 4.5.0 was released on April 11, 2025), install it along with `RTools45` (download available [here](https://cran.r-project.org/bin/windows/Rtools/rtools45/rtools.html). This is the preferred approach, if compatible. Once R version $\geq$ 4.5.0 and `RTools45` are installed, install the library from GitHub. In the R console, type:
+
+    ```
+    install.packages("devtools")
+    devtools::install_github("https://github.com/fdaPDE/fdaPDE-R")
+    ``` 
+
+  * Alternatively, use the **Docker** image (this requires Windows Subsystem for Linux -- see instructions below).
 
 ---
 
-## Image Usage
+## Docker Image
 
-If you have not already installed Docker on your machine, please refer to the **Installation** section below.
-To pull the Docker image, run the following command from a terminal:
+If **Docker** is not yet installed on your machine, please refer to the **Installation** section below. To pull the **Docker** image, run the following command in a terminal:
 
-```bash
-docker pull aldoclemente/fdapde-docker:rstudio-nographics
+```
+docker pull aldoclemente/fdapde-docker:rstudio
 ```
 
-To run a container, execute:
+To run a container, execute (replacing `/path/to/data` with the full path to the folder containing your data or course material):
 
 ```bash
-docker run --rm -d -p 8787:8787 -v /path/to/data:/home/user/data --name rstudio -e PASSWORD=password aldoclemente/fdapde-docker:rstudio-nographics
+docker run --rm -d -p 8787:8787 -v /path/to/data:/home/user/data --name rstudio -e PASSWORD=password aldoclemente/fdapde-docker:rstudio
 ```
 
-* Replace `/path/to/data` with the **full path** to the folder containing your data or course material.
-
-This will launch an **RStudio Server** instance inside Docker. You can then access RStudio in your browser at:
-
-**[http://localhost:8787](http://localhost:8787)**
+This will launch an `RStudio Server` instance inside **Docker**. You can then access `RStudio` in your browser at [http://localhost:8787](http://localhost:8787).
 
 Log in with:
 
 * **Username**: `user`
 * **Password**: `password`
 
-Inside RStudio, set your working directory by running:
+Inside `RStudio`, set your working directory by running:
 
 ```
 setwd("data/")
@@ -79,18 +93,16 @@ docker stop rstudio
 #### Step 3: Install Ubuntu via WSL
 
 1. Open **Command Prompt** or **PowerShell** as Administrator.
+
 2. Run:
+    ```
+    wsl --install
+    ```
 
-```
-wsl --install --distribution Ubuntu
-```
+    By default, the **Ubuntu** distribution gets installed in Windows Subsystem for Linux (WSL2)
 
-3. Restart your machine and follow the instructions to set up your Ubuntu user account.
-4. Verify your WSL version:
+3. Follow the instructions to set up your user account.
 
-```
-wsl --version
-```
 
 #### Step 4: Install Docker Desktop
 
@@ -101,30 +113,32 @@ wsl --version
 
 #### Step 5: Test Docker
 
-1. Open your WSL terminal by running from PowerShell:
+1. Open your WSL terminal by running from **PowerShell**:
 
-```
-wsl
-```
+    ```
+    wsl
+    ```
 
 2. Run:
 
-```
-docker --version
-```
+    ```
+    docker --version
+    ```
 
+3. You can now pull the Docker image as described above, and run the **Docker** container inside WSL.
 ---
 
 ### macOS Users
 
-1. Download and install Docker Desktop from [this link](https://docs.docker.com/desktop/setup/install/mac-install/).
-2. Open Docker Desktop and grant the necessary permissions.
-3. Log in or create a Docker Hub account.
+1. Download and install Docker Desktop from [this link](https://docs.docker.com/desktop/setup/install/mac-install/);
+2. Open Docker Desktop and grant the necessary permissions;
+3. Log in or create a Docker Hub account;
 4. Verify the Docker installation:
 
-```bash
-docker --version
-```
+    ```
+    docker --version
+    ```
+5. You can now pull the Docker image and run the container as described above.
 
 ---
 
@@ -132,36 +146,36 @@ docker --version
 
 1. Install Docker:
 
-```
-sudo apt-get update
-sudo apt-get install -y docker.io
-```
+    ```
+    sudo apt-get update
+    sudo apt-get install -y docker.io
+    ```
 
 2. Check that Docker is running:
 
-```
-systemctl status docker
-```
+    ```
+    systemctl status docker
+    ```
 
-If Docker is inactive, start the service:
+    If Docker is inactive, start the service:
 
-```
-sudo systemctl start docker
-```
+    ```
+    sudo systemctl start docker
+    ```
 
 3. To avoid typing `sudo` whenever you run the `docker` command, add your username to the Docker group:
 
-```
-sudo usermod -aG docker $USER
-```
+    ```
+    sudo usermod -aG docker $USER
+    ```
 
 4. Restart your machine.
 
 5. Log in to Docker Hub:
 
-```
-docker login
-```
+    ```
+    docker login
+    ```
 
 6. You can now pull the Docker image and run the container as described above.
 
@@ -173,3 +187,4 @@ docker login
 * If you encounter issues, consult the [official Docker documentation](https://docs.docker.com/) for your platform.
 
 
+**<h2 style="text-align: center;">You are ready to use the brand-new version of *fdaPDE* ! 😄 </h2>**
