@@ -110,7 +110,12 @@ docker stop rstudio
 
 #### Step 4: Install Docker Desktop
 
-1. Download and install **Docker Desktop** from [this link](https://docs.docker.com/desktop/setup/install/windows-install/);
+1. Download and install **Docker Desktop** from [this link](https://docs.docker.com/desktop/setup/install/windows-install/).
+   
+    ❗ The latest version of Docker Desktop may not be compatible with your machine. 
+        If you encounter any issues, please refer to [this page](https://docs.docker.com/desktop/release-notes/#400) 
+        and install a version of **Docker Desktop** that is compatible with your system.
+
 2. Log in or create a **Docker Hub** account;
 3. Go to **Settings > Resources > WSL Integration** and enable integration for Ubuntu;
 4. Consider increasing the resources allocated to **Docker Desktop**. Specifically, you can increase the 
@@ -136,7 +141,13 @@ docker stop rstudio
 
 ### macOS Users
 
-1. Download and install **Docker Desktop** from [this link](https://docs.docker.com/desktop/setup/install/mac-install/);
+1. Download and install **Docker Desktop** from [this link](https://docs.docker.com/desktop/setup/install/mac-install/).
+
+    ❗ The latest version of Docker Desktop may not be compatible with your machine. 
+        If you encounter any issues, please refer to [this page](https://docs.docker.com/desktop/release-notes/#400) 
+        and install a version of **Docker Desktop** that is compatible with your system.
+
+
 2. Open **Docker Desktop** and grant the necessary permissions;
 3. Log in or create a **Docker Hub** account;
 4. Consider increasing the resources allocated to **Docker Desktop**. Specifically, you can increase the 
