@@ -110,10 +110,12 @@ docker stop rstudio
 
 #### Step 4: Install Docker Desktop
 
-1. Download and install Docker Desktop from [docker.com](https://www.docker.com/).
-2. Log in or create a Docker Hub account.
-3. Go to **Settings > Resources > WSL Integration** and enable integration for Ubuntu.
-4. Restart your machine.
+1. Download and install **Docker Desktop** from [this link](https://docs.docker.com/desktop/setup/install/windows-install/);
+2. Log in or create a **Docker Hub** account;
+3. Go to **Settings > Resources > WSL Integration** and enable integration for Ubuntu;
+4. Consider increasing the resources allocated to **Docker Desktop**. Specifically, you can increase the 
+   maximum number of CPUs and the amount of RAM in the **Advanced** settings. 
+5. Restart your machine.
 
 #### Step 5: Test Docker
 
@@ -129,45 +131,47 @@ docker stop rstudio
     docker --version
     ```
 
-3. You can now pull the Docker image as described above, and run the **Docker** container inside WSL.
+3. You can now pull the **Docker** image as described above, and run the **Docker** container inside WSL.
 ---
 
 ### macOS Users
 
-1. Download and install Docker Desktop from [this link](https://docs.docker.com/desktop/setup/install/mac-install/);
-2. Open Docker Desktop and grant the necessary permissions;
-3. Log in or create a Docker Hub account;
-4. Verify the Docker installation:
+1. Download and install **Docker Desktop** from [this link](https://docs.docker.com/desktop/setup/install/mac-install/);
+2. Open **Docker Desktop** and grant the necessary permissions;
+3. Log in or create a **Docker Hub** account;
+4. Consider increasing the resources allocated to **Docker Desktop**. Specifically, you can increase the 
+   maximum number of CPUs and the amount of RAM in the **Advanced** settings. 
+5. Verify the **Docker** installation:
 
     ```
     docker --version
     ```
-5. You can now pull the Docker image and run the container as described above.
+6. You can now pull the **Docker** image and run the container as described above.
 
 ---
 
 ### Ubuntu Users
 
-1. Install Docker:
+1. Install **Docker**:
 
     ```
     sudo apt-get update
     sudo apt-get install -y docker.io
     ```
 
-2. Check that Docker is running:
+2. Check that **Docker** is running:
 
     ```
     systemctl status docker
     ```
 
-    If Docker is inactive, start the service:
+    If **Docker** is inactive, start the service:
 
     ```
     sudo systemctl start docker
     ```
 
-3. To avoid typing `sudo` whenever you run the `docker` command, add your username to the Docker group:
+3. To avoid typing `sudo` whenever you run the `docker` command, add your username to the **Docker** group:
 
     ```
     sudo usermod -aG docker $USER
@@ -175,19 +179,19 @@ docker stop rstudio
 
 4. Restart your machine.
 
-5. Log in to Docker Hub:
+5. Log in to **Docker Hub**:
 
     ```
     docker login
     ```
 
-6. You can now pull the Docker image and run the container as described above.
+6. You can now pull the **Docker** image and run the container as described above.
 
 ---
 
 ## Final Notes
 
-* Ensure Docker is running before pulling or running any image.
+* Ensure **Docker** is running before pulling or running any image.
 * If you encounter issues, consult the [official Docker documentation](https://docs.docker.com/) for your platform.
 
 
