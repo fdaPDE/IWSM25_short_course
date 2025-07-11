@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="header_short_course.png" />
+</p>
+
 # A warm welcome to the `fdaPDE` world!
 
 `fdaPDE` is a library for *physics-informed spatial and functional data analysis*, at the intersection of statistics and numerical analysis, designed for data located over *complex multidimensional domains*,
