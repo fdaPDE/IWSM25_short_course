@@ -9,7 +9,8 @@ library(raster)
 library(RTriangle)
 library(sf)
 library(viridis)
-library(patchwork)
+library(fields)
+
 # "ggforce", "htmlwidgets",
 # "patchwork", "plotrix",
 # "RColorBrewer", "simcausal", "sp"
@@ -82,6 +83,31 @@ st_as_sfc.gf_areal <- function(x, crs = NULL, ...){
   return(polygons_sfc)
 }
 
+# HELPER FUNCTION: COMPUTE AREAL EVALUATION ------------------------------------
+eval_areal <- function(x, layer, crs = NULL){
+  
+  incidence_matrix = layer[["gf__ptr__"]]$incidence_matrix
+  idx = which(incidence_matrix == 1, arr.ind = TRUE)
+  markers = idx[order(idx[, "col"]), "row"]
+
+  n_regions = nrow(layer)
+  val = vector(mode = "numeric", length = n_regions)
+  for(i in seq_len(n_regions)){
+    incidence = function(cell) {
+      cell_id = get_private(cell)$id_ + 1
+      if(markers[cell_id] == i) return(TRUE)
+      else return(FALSE)
+    }
+    get_private(layer[["gf__ptr__"]])$mesh_$mark_cells(marker = i, predicate = incidence)
+    val[i] = x$integral(i)*100
+  }
+  
+  if(is.null(crs)) crs = NA_crs_
+  f = st_sf(data = val, geometry = st_as_sfc(layer), crs = crs)
+
+  return(f)
+}
+
 # MAPVIEW WRAPPER --------------------------------------------------------------
 mapview <- function(x, ..., res_lon = NULL, res_lat = NULL, varnames = NULL,
                     color_palettes = NULL, crs = NULL) {
@@ -96,6 +122,16 @@ mapview <- function(x, ..., res_lon = NULL, res_lat = NULL, varnames = NULL,
   if (inherits(x, "gf_point")) {
     if(is.null(crs)) crs = NA_crs_
     if(is.null(varnames)) varnames = names(x)
+    if(length(varnames) == 1){
+      if(varnames == ""){
+        df = gf_locations(x)
+        df = as.data.frame(df)
+        names(df) = c("lon", "lat")
+        df$id = 1:nrow(df)
+        df_sf = st_as_sf(x = df, coords = c("lon", "lat"), crs = crs)
+        return(mapview::mapview(df_sf, legend = FALSE, ...))
+      }
+    }
     if(is.null(color_palettes)) color_palettes = list(mode = "character", length = length(varnames))
     if(length(color_palettes) == 1 & length(varnames) >= 1) {
       tmp = color_palettes[[1]]
@@ -177,4 +213,35 @@ mapview <- function(x, ..., res_lon = NULL, res_lat = NULL, varnames = NULL,
   }
 
   mapview::mapview(x, ..., crs = crs)
+}
+
+# fPCA
+plot.plottable_function <- function(x, palette = NULL, ...) {
+  n_col <- 100
+  if (is.null(palette)) {
+    palette_ <- colorRampPalette(colors = c("lightyellow", "darkred"))(n_col)
+  } else if(is.function(palette)) {
+    palette_ <- palette(n_col)
+  } else { # user-defined palette
+    palette_ <- palette_
+  }
+  
+  nodes <- x$geometry$nodes
+  x_grid <- seq(min(nodes[, 1]), max(nodes[, 1]), length.out = 250)
+  y_grid <- seq(min(nodes[, 2]), max(nodes[, 2]), length.out = 250)
+  xy_grid <- expand.grid(x_grid, y_grid)
+  ## evaluate fe_function at fine grid
+  vals <- x$eval(xy_grid)
+  
+  col <- palette_[as.numeric(cut(vals, breaks = n_col))]
+  plot(
+    xy_grid[, 1],
+    xy_grid[, 2],
+    xlab = "",
+    ylab = "",
+    pch = 15,
+    col = col,
+    asp = 1,
+    cex = .6, ...
+  )
 }

@@ -5,8 +5,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   message = FALSE,
-  warning = FALSE,
-  root.dir = "$(pwd)/../"
+  warning = FALSE
 )
 
 
@@ -32,7 +31,8 @@ theme_set(theme_minimal() +
 
 ## ----spatial_domain-----------------------------------------------------------
 ## [SPATIAL DOMAIN]
-domain <- st_read(dsn = "../data/SRPDE_2D/domain/SRPDE_2D_domain.shx")
+# Load domain
+domain <- st_read(dsn = "../data/SRPDE_2D/domain/SRPDE_2D_domain.shx", quiet = TRUE)
 domain
 
 
@@ -88,7 +88,7 @@ head(mesh$nodes)
 mesh$n_nodes
 
 # Edges
-head(mesh$nodes)
+head(mesh$edges)
 
 # Number of edges
 mesh$n_edges
@@ -124,20 +124,25 @@ florida
 data <- read.table(file = "../data/SRPDE_2D/SRPDE_2D_data.txt")
 head(data)
 
-# Convert data into a sf object
-data_sf <- st_as_sf(x = data, coords = c("lon", "lat"), crs = 4326)
-
 # Add layer with data to the geoframe object
-florida$insert(layer = "ocean", type = "point",
-          geo = c("lon", "lat"), data = data)
+florida$insert(layer = "ocean", type = "point", geo = c("lon", "lat"), data = data)
 florida
 
+# Variable names
+names(florida[["ocean"]])
 
-## ----mapview_data, fig.width=8.25, fig.height=5-------------------------------
+# Number of variables
+ncol(florida[["ocean"]])
+
+# Locations of measurement stations (lon, lat)
+head(gf_locations(florida[["ocean"]]))
+
+
+## ----mapview_data, fig.width=8.3, fig.height=5--------------------------------
 # Interactive plot
 mapview(florida[["ocean"]], crs = 4326,
-        color_palettes = list("inferno", "viridis", "viridis", "viridis",
-                              "viridis", "viridis"))
+        color_palettes = list("inferno", "viridis", "viridis",
+                              "viridis", "viridis", "viridis"))
 
 
 ## ----SST----------------------------------------------------------------------
@@ -155,7 +160,8 @@ mapview(SST - 273.15, col.regions = inferno, na.color = "transparent",
 
 
 ## ----SST_iso_fixed, results="hide"--------------------------------------------
-# Set up the finite element function
+## [ISOTROPIC SMOOTHING WITH FIXED SMOOTHING PARAMETER]
+# Set up the finite element function (order 1)
 f_SST_iso_fixed <- fe_function(mesh, type = "P1")
 
 # Proposed value for the smoothing parameter
@@ -196,10 +202,11 @@ sync(map1, map2)
 
 
 ## ----SST_iso_grid, results="hide"---------------------------------------------
+## [ISOTROPIC SMOOTHING WITH OPTIMAL SMOOTHING PARAMETER]
 # Proposed values for the smoothing parameter
 lambda_grid <- 10^seq(from = -6, to = -2, by = 0.2)
 
-# Set up the finite element function
+# Set up the finite element function (order 1)
 f_SST_iso_grid <- fe_function(mesh, type = "P1")
 
 # Isotropic smoothing model
@@ -236,8 +243,8 @@ grid()
 abline(v = log10(lambda_fixed), lty = 2, lwd = 2, col = "lightblue3")
 abline(v = log10(lambda_opt_grid), lty = 2, lwd = 2, col = "royalblue")
 legend("topleft", lty = c(2, 2), lwd = c(2, 2), col = c("lightblue3", "royalblue"),
-       legend = c(TeX("$\\log(\\lambda_{fixed})"),
-                  TeX("$\\log(\\lambda_{grid})")))
+       legend = c(TeX("$\\log_{10}(\\lambda_{fixed})"),
+                  TeX("$\\log_{10}(\\lambda_{grid})")))
 
 
 ## ----mapview_SST_iso_grid, fig.width=8.3, fig.height=5------------------------
@@ -256,6 +263,7 @@ sync(map1, map2)
 
 
 ## ----transport----------------------------------------------------------------
+## [TRANSPORT TERM]
 # Load the horizontal component of the transport term as a raster object
 load("../data/SRPDE_2D/raster/Transport_x.RData")
 Transport_x
@@ -283,11 +291,6 @@ get_transport_coeff <- function(x, y){
 }
 
 
-## ----include=FALSE------------------------------------------------------------
-api_key <- "..." # your stadiamaps key
-register_stadiamaps(api_key)
-
-
 ## ----ggplot_transport, warning=FALSE, fig.width=8.3, fig.height=4-------------
 # Create a data.frame with transport term values
 df <- as.data.frame(coordinates(SST))
@@ -302,19 +305,23 @@ df$Transport_coeff <- ifelse(is.na(values(SST)), NA,
 # Thin out the number of vectors
 df <- df %>% filter(row_number() %% 1000 == 0)
 
-## [STADIA MAPS API KEY]
-# Insert here your API key; for link and instruction: ??register_stadiamaps
-# register_stadiamaps(key = "---your API key---", write = TRUE)
-
 # Compute the bounding box
 bbox <- extent(SST)
 
+## [STADIA MAPS API KEY]
+# Insert here your API key; for link and instruction: ??register_stadiamaps
+# register_stadiamaps(key = "--- your API key ---", write = TRUE)
+
+# Map: run the three lines below once you have a working STADIA MAPS API key]
+# map <- get_stadiamap(bbox = c(left = bbox@xmin, bottom = bbox@ymin,
+#                               right = bbox@xmax, top = bbox@ymax),
+#                      zoom = 7, maptype = "alidade_smooth", color = "bw")
+
+# Map: if you do not have a working STADIA MAPS API key, run the lines below
+load(file = "../data/SRPDE_2D/raster/map.RData")
+
 # Static plot
-ggmap(get_stadiamap(bbox = c(left = bbox@xmin, bottom = bbox@ymin,
-                             right = bbox@xmax, top = bbox@ymax),
-                    zoom = 7,
-                    maptype = "alidade_smooth",
-                    color = "bw")) +
+ggmap(map) +
   geom_segment(aes(xend = lon + Transport_x, yend = lat + Transport_y,
                    colour = Transport_coeff),
                data = df,
@@ -325,15 +332,17 @@ ggmap(get_stadiamap(bbox = c(left = bbox@xmin, bottom = bbox@ymin,
   theme(legend.position = "right",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 8),
-        text = element_text(size = 14)) +
+        text = element_text(size = 14),
+        axis.title = element_text(size = 10),
+        axis.text = element_text(size = 8)) +
   labs(color = "Velocity [m/s]") +
-  theme(text = element_text(size = 14)) +
   guides(colour = guide_colourbar(barheight = unit(7, "cm"),
                                   barwidth = unit(0.55, "cm"),
                                   raster = TRUE, ticks = FALSE))
 
 
 ## ----PDE_parameters-----------------------------------------------------------
+## [PDE PARAMETERS]
 # Diffusion tensor
 K <- 0.0218 * diag(2)
 
@@ -349,17 +358,18 @@ b <- function(points){
 
 
 ## ----SST_physics, results="hide"----------------------------------------------
+## [PHYSICS-INFORMED SMOOTHING WITH OPTIMAL SMOOTHING PARAMETER]
 # Proposed values for the smoothing parameter
 lambda_grid <- 10^seq(from = -6, to = -2, by = 0.2)
 
-# Set up the finite element function
+# Set up the finite element function (order 1)
 f_SST_physics <- fe_function(mesh, type = "P1")
 
 # Physics-informed smoothing model
 model_SST_physics <- sr(formula = SST ~ f_SST_physics, data = florida,
                         penalty = fe_elliptic(K = K, b = b))
 
-# Physics-informed smoothing fit with Newton's method for GCV minimization
+# Physics-informed smoothing fit with grid search for GCV minimization
 fit_SST_physics <- model_SST_physics$fit(calibrator = 
   gcv(optimizer = grid_search(grid = lambda_grid))
 )
@@ -410,9 +420,9 @@ sync(map1, map2, map3, map4, ncol = 2)
 # Boxplot
 par(family = "serif")
 boxplot(SST_iso_grid_residuals, SST_physics_residuals,
-        col = rocket(2), ylab = "residuals")
+        col = c("forestgreen", "gold"), ylab = "residuals")
 axis(1, at = 1:2, line = 0.5, tick = FALSE,
-     labels = c("ISOTROPIC SR-PDE\n (GRID)", "PHYSICS-INFORMED SR-PDE\n (NEWTON)"))
+     labels = c("ISOTROPIC SR-PDE\n (GRID)", "PHYSICS-INFORMED SR-PDE\n (GRID)"))
 
 
 ## ----mapview_DO_data, fig.width=8.3, fig.height=5-----------------------------
@@ -442,7 +452,8 @@ K <- 1.1341 * diag(2)
 
 
 ## ----DO_physics---------------------------------------------------------------
-# Set up the finite element function
+## [ISOTROPIC SMOOTHING WITH A COVARIATE AND OPTIMAL SMOOTHING PARAMETER]
+# Set up the finite element function (order 1)
 f_DO_physics <- fe_function(mesh, type = "P1")
 
 # Physics-informed smoothing model

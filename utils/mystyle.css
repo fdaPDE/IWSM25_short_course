@@ -22,10 +22,17 @@ h2 {
   margin-bottom: 20px;               /* Adds space below the subtitle */
 }
 
-/* Styling for headers (h3, h4, etc.) */
-h3, h4 {
+/* Styling for headers (h3) */
+h3 {
   color: #102C53;                  /* Sets the color of subheadings */
   font-size: 1.2em;                  /* Sets the font size for the subtitle */
+  font-weight: bold;                 /* Makes subheadings bold */
+}
+
+/* Styling for headers (h4, etc.) */
+h4 {
+  color: #102C53;                  /* Sets the color of subheadings */
+  font-size: 1.0em;                  /* Sets the font size for the subtitle */
   font-weight: bold;                 /* Makes subheadings bold */
 }
 

@@ -21,20 +21,26 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   message = FALSE,
-  warning = FALSE)
+  warning = FALSE,
+  root.dir = "$(pwd)/../"
+)
 ```
 
-The `fdaPDE` C++/R library [@arnone2025fdapde] provides advanced statistical methods for *physics-informed spatial and functional data analysis*, featuring regularization terms based on partial differential equations; for a review of this class of methods, refer to @sangalli2021spatial. The library can handle different types of data that may evolve over time on non-standard spatial domains, including linear networks, irregular planar regions, curved surfaces, and volumes. Among the broad range of modeling capabilities offered by `fdaPDE`, we focus here on the **spatial density estimation method**.
+`fdaPDE` [@arnone2025fdapde] is a C++ library with an interface to R for *physics-informed spatial and functional data analysis*, at the intersection of statistics and numerical analysis. The library provides advanced statistical methods designed for data located over complex spatial domains, ranging from irregular planar regions and curved surfaces to linear networks and volumes, possibly evolving over time. The class of methods implemented in `fdaPDE` features regularization terms based on Partial Differential Equations (PDEs), which allow incorporating information derived from the physics of the problem under study into the statistical modeling. This makes `fdaPDE` an extremely flexible tool for the analysis of complex data. For a review of this class of methods, refer to @sangalli2021spatial.
 
-## Spatial density estimation method
+`fdaPDE` offers a wide range of modeling capabilities -- including regression, nonparametric
+density estimation, functional data analysis, and more -- for data located over a spatial domain,
+possibly evolving over time. Among the broad range of modeling capabilities offered by `fdaPDE`, we focus here on the **spatial density estimation method**.
 
-Given *independent and identically distributed* point locations $\left\{\mathbf{p}_i\right\}_{i=1}^n \in \mathcal{D}$ observed on a spatial domain $\mathcal{D} \subset \mathbb{R}^2$, drawn from a common distribution $F$, we aim to estimate the corresponding *unknown* probability density function $f : \mathcal{D} \to \mathbb{R}^+$. Here, the spatial domain is a planar region, which may feature non-standard geometries, including irregular boundaries, concavities, and holes. We handle data observed on other types of spatial domains in separate vignettes; examples include linear networks and curved surfaces.
+## Model
 
-For mathematical convenience, the estimation problem is reparameterized in terms of the log-density $g = \log f$. @ferraccioli2021nonparametric proposes to estimate $g$ as the minimizer of the following *penalized negative log-likelihood* $L(g)$:
+Given *independent and identically distributed* point locations $\left\{\mathbf{p}_i\right\}_{i=1}^n \in \mathcal{D}$ observed on a *spatial domain* $\mathcal{D} \subset \mathbb{R}^2$, drawn from a common distribution $F$, we aim to estimate the corresponding *unknown probability density function* $f : \mathcal{D} \to \mathbb{R}^+$. Here, the spatial domain is a *planar region*, which may feature non-standard geometries, including irregular boundaries, concavities, and holes. The proposed density estimation method can accommodate also data observed on other types of spatial domains; examples include *linear networks* and *curved surfaces*.
+
+For mathematical convenience, the estimation problem is reparameterized in terms of the log-density $g = \log f$. @ferraccioli2021nonparametric proposes to estimate $g$ as the minimizer of the following **penalized negative log-likelihood** $L(g)$:
 $$ L(g) = -\frac{1}{n} \sum_{i=1}^n g(\mathbf{p}_i)+\int_\mathcal{D} e^{g(\mathbf{p})} \, \text{d} \mathbf{p} + \lambda \int_\mathcal{D} \left( \Delta g(\mathbf{p}) \right)^2 \, \text{d}\mathbf{p}\,. $$
-The first term represents the *model fit* criterion, the second term ensures that $f$ is a *proper density* in $\mathcal{D}$, and the third term encodes the *smoothness of the estimate*, with the smoothing parameter $\lambda > 0$ balancing the model adherence to the data with the regularity of the estimate. Extensions of this model to accommodate data observed on curved surfaces are described in @arnone2022roughness, while @begu2024nonparametric proposes the model for density estimation in the spatio-temporal framework.
+The first term represents the *model fit* criterion. The second term ensures that $f$ is a *proper density* in $\mathcal{D}$. The third term is the **regularization term**, which encodes the *smoothness of the estimate*. The **smoothing parameter** $\lambda > 0$ balances the model adherence to the data with the regularity of the estimate. Extensions of this model to accommodate data observed on curved surfaces are described in @arnone2022roughness, while @begu2024nonparametric proposes the model for density estimation in the spatio-temporal framework.
 
-The method for Density Estimation with Partial Differential Equation regularization for purely spatial point patterns, hereafter referred to as `DE-PDE`, is implemented within the `fdaPDE` C++/R library [@arnone2025fdapde]. We load the library in the working environment as follows:
+The method for Density Estimation with Partial Differential Equation regularization for purely spatial point patterns, hereafter referred to as `DE-PDE`, is implemented within the newest version of the `fdaPDE` C++ library [@arnone2025fdapde]. We load the library in the working environment as follows:
 
 ```{r fdaPDE, eval=TRUE}
 # Import the fdaPDE library
@@ -56,23 +62,11 @@ theme_set(theme_minimal() +
 )
 ```
 
-## Application study on gastrointestinal infections in Southampton, Hampshire county, UK
+## Application to gastrointestinal infection data in Southampton (Hampshire county, UK)
 
-As a benchmark application in epidemiology, we analyze cases of non-specific gastrointestinal symptoms reported to National Health Service (NHS) Direct in Hampshire County, United Kingdom, during the period from 2001 to 2003. The dataset, provided by @diggle2003line, comprises $9\,949$ locations where the event of interest was observed; see also @diggle2005point.
+As a benchmark application in epidemiology, we analyze cases of *non-specific gastrointestinal symptoms* reported to National Health Service (NHS) Direct in Hampshire County, United Kingdom, during the period from 2001 to 2003. The dataset, provided by @diggle2003line, comprises $9\,949$ locations where the event of interest was observed; see also @diggle2005point.
 
-### Spatial domain
-
-We import the preprocessed data from the file `../data/DEPDE_2D/DEPDE_2D_data.txt`.
-
-```{r data}
-## [DATA]
-# Load the data
-data <- read.table(file = "../data/DEPDE_2D/DEPDE_2D_data.txt")
-head(data)
-
-# Select the first 2000 rows (first year)
-data <- data[1:2000,]
-```
+### 1. Spatial domain
 
 To get the boundary of the spatial domain under consideration, we import the boundary nodes and segments from the files `../data/DEPDE_2D/DEPDE_2D_boundary_nodes.txt` and `../data/DEPDE_2D/DEPDE_2D_boundary_segments.txt`.
 
@@ -89,7 +83,7 @@ head(boundary_segments)
 
 We use the `sf` [@pebesma2025sf] and `mapview` [@appelhans2025mapview] R packages to visualize the spatial domain interactively.
 
-```{r mapview_boundary, fig.width=8.25, fig.height=5}
+```{r mapview_boundary, fig.width=8.3, fig.height=5}
 # Convert boundary into a sf object
 boundary_nodes_sf <- st_as_sf(x = rbind(boundary_nodes, boundary_nodes[1,]),
                               coords = c("lon", "lat"), crs = 4326)
@@ -143,7 +137,7 @@ head(mesh$nodes)
 mesh$n_nodes
 
 # Edges
-head(mesh$nodes)
+head(mesh$edges)
 
 # Number of edges
 mesh$n_edges
@@ -181,11 +175,11 @@ hampshire <- geoframe(domain = mesh)
 hampshire
 ```
 
-### Data
+### 2. Data
 
-We briefly introduce the data under study. We add a data layer to the `geoframe` object defined above, thus obtaining a format compatible with the implementation of the proposed regression method. The layer contains the preprocessed data from the file `../data/DEPDE_2D/DEPDE_2D_data.txt`, which is loaded into the working environment as a `data.frame` object. To simplify the analysis, here we restrict our attention to the first $2\,500$ cases, corresponding to events recorded in 2001.
+We briefly introduce the data under study. We add a data layer to the `geoframe` object defined above, thus obtaining a format compatible with the implementation of the proposed density estimation method. The layer contains the preprocessed data from the file `../data/DEPDE_2D/DEPDE_2D_data.txt`, loaded into the working environment as a `data.frame` object. To simplify the analysis, here we restrict our attention to the first $2\,500$ cases, corresponding to events recorded in 2001.
 
-```{r data2}
+```{r data}
 ## [DATA]
 # Load the data
 data <- read.table(file = "../data/DEPDE_2D/DEPDE_2D_data.txt")
@@ -201,25 +195,27 @@ hampshire
 
 The recorded values are shown in the interactive plot below, created using the `mapview` [@appelhans2025mapview] R package. In this vignette, 
 
-```{r mapview_data, fig.width=8.25, fig.height=5}
+```{r mapview_data, fig.width=8.3, fig.height=5}
 # Interactive plot
-mapview(st_as_sf(data, coords = c("lon", "lat"), crs = 4326), 
-        color="red3", col.region ="red3", cex=2, legend = FALSE) + 
+mapview(hampshire[["diseases"]], varnames = "", crs = 4326, col.regions = "red3",
+        cex = 2.5, layer.name = "locations") +
  mapview(boundary_sf,
-        col.regions = "gray25", alpha.regions = 0.25, col = "black", lwd = 1.5,
-        legend = FALSE, layer = "domain") 
+         col.regions = "gray25", alpha.regions = 0.25, col = "black", lwd = 1.5,
+         legend = FALSE, layer = "domain") 
 ```
 
 <div style="text-align: center;">
 Figure 3: Locations of non-specific gastrointestinal symptoms reported to National Health Service (NHS) Direct in Hampshire County, United Kingdom, in 2001.
 </div>
 
-Now we are ready to compute the `DE-PDE` density estimate using the `ppe` function. This function offers several options for solving the optimization problem. For further information, see the documentation in the Help by typing `?depp`. By default, the initial guess is estimated using the uniform distribution on the spatial region under consideration. In this example, for simplicity, we fix the value of the smoothing parameter to 5e-05 and perform a single fit.
+### 3. Density estimation model fitting
+
+We are ready to compute the `DE-PDE` density estimate using the `ppe` function. This function offers several options for solving the optimization problem -- here, we use the iterative Broyden–Fletcher–Goldfarb–Shanno (BFGS) optimization algorithm. For further information, see the documentation in the Help by typing `?ppe`. By default, the initial guess is estimated using the uniform distribution on the spatial region under consideration. In this example, for simplicity, we fix the value of the smoothing parameter to $0.01$ and perform a single fit.
 
 ```{r density, results="hide"}
 ## [DENSITY ESTIMATION]
 # Proposed value for the smoothing parameter
-lambda_fixed <- 5e-5
+lambda_fixed <- 1e-2
 
 # Density estimation model
 model <- ppe(data = hampshire)
@@ -236,28 +232,32 @@ Typically, users have no prior knowledge about the optimal value of the smoothin
 We print the density estimation model outputs.
 
 ```{r density_output}
-#****
+# Density estimates at mesh nodes
+head(model$density)
+
+# Log-density estimates at mesh nodes
+head(model$log_density)
+
 # Finite element function
 f <- fe_function(domain =  mesh, type = "P1", coeff = model$log_density)
 ```
 
-The regression model fit over the region of interest is instead displayed below (left). For qualitative comparison, the SST data from NASA satellite images is also displayed (right).
+The density estimation model fit over the region of interest is instead displayed below.
 
 ```{r mapview_SST_iso_grid, fig.width=8.3, fig.height=5}
 # Interactive plot
 mapview(f, crs = 4326, col.regions = inferno,
-        na.color = "transparent", layer.name = "log(estimate)") +
+        na.color = "transparent", layer.name = "ESTIMATE") +
   mapview(boundary_sf,
         col.regions = "gray25", alpha.regions = 0.25, col = "black", lwd = 2,
         legend = FALSE, layer.name = "domain")
-
-#  mapview(mesh, col.regions = "transparent", alpha.regions = 0,
-#          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
 ```
 
 <div style="text-align: center;">
-Figure 4: `DE-PDE` density estimate.
+Figure 4: `DE-PDE` density estimate. The values seems very high, but the domain area is very small.
 </div>
+
+The values in the figure above may appear very high because the coordinates are expressed in longitude and latitude, which results in a much smaller domain area than in reality. One may consider rescaling the values to account for this fact.
 
 The irregular shape of the spatial domain influences the disease spread, resulting for instance in different behaviors along the western and eastern shores of the Southampton Water estuary. The method effectively captures this spatial pattern.
 

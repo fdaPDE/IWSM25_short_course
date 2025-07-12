@@ -21,35 +21,40 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   message = FALSE,
-  warning = FALSE
+  warning = FALSE,
+  root.dir = "$(pwd)/../"
 )
 ```
 
-The `fdaPDE` C++/R library [@arnone2025fdapde] provides advanced statistical methods for *physics-informed spatial and functional data analysis*, featuring regularization terms based on partial differential equations; for a review of this class of methods, refer to @sangalli2021spatial. The library can handle different types of data that may evolve over time on non-standard spatial domains, including linear networks, irregular planar regions, curved surfaces, and volumes. Among the broad range of modeling capabilities offered by `fdaPDE`, we focus here on the **generalized spatial regression method**.
+`fdaPDE` [@arnone2025fdapde] is a C++ library with an interface to R for *physics-informed spatial and functional data analysis*, at the intersection of statistics and numerical analysis. The library provides advanced statistical methods designed for data located over complex spatial domains, ranging from irregular planar regions and curved surfaces to linear networks and volumes, possibly evolving over time. The class of methods implemented in `fdaPDE` features regularization terms based on Partial Differential Equations (PDEs), which allow incorporating information derived from the physics of the problem under study into the statistical modeling. This makes `fdaPDE` an extremely flexible tool for the analysis of complex data. For a review of this class of methods, refer to @sangalli2021spatial.
 
-## Generalized spatial regression method
+`fdaPDE` offers a wide range of modeling capabilities -- including regression, nonparametric
+density estimation, functional data analysis, and more -- for data located over a spatial domain,
+possibly evolving over time. Among the broad range of modeling capabilities offered by `fdaPDE`, we focus here on the **generalized spatial regression method**.
 
-Let $\mathcal{D} \subset \mathbb{R}^d$, with $d \geq 1$, be a bounded spatial domain of interest in which $n$ fixed measurement stations are located. Here, we consider $d = 2$, but the proposed method can handle multidimensional spatial domains with complex shapes, including two-dimensional curved surfaces [@ettinger2016spatial] and non-convex three-dimensional volumes [@arnone2023analyzing]. At the location $\mathbf{p}_i = (p_{1i}, p_{2i})^\top \in \mathcal{D}$ of each station, we observe a realization $y_i \in \mathbb{R}$ of the response variable $Y_i$ under study, along with a set of covariates $\mathbf{x}_i = \left( x_{i,1},\ldots,x_{i,q} \right)^\top \in \mathbb{R}^q$, if available. Specifically, we assume that $Y_i$ follows a distribution from the exponential family, with mean $\mu_i$ and a common scale parameter $\phi$, for $i = 1, \ldots, n$. In the context of spatial regression, we present a generalized additive model with partial differential equation regularization, which we formulate according to @wilhelm2016generalized, as follows:
+## Model
+
+Let $\mathcal{D} \subset \mathbb{R}^d\,,$ with $d \geq 1\,,$ be a bounded *spatial domain* of interest in which $n$ fixed *measurement stations* are located. Here, we consider $d = 2\,,$ but the proposed method can handle multidimensional spatial domains with complex shapes, including *two-dimensional curved surfaces* [@ettinger2016spatial] and *non-convex three-dimensional volumes* [@arnone2023analyzing]. At the location $\mathbf{p}_i = (p_{1i}, p_{2i})^\top \in \mathcal{D}$ of each station, we observe a realization $y_i \in \mathbb{R}$ of the response variable $Y_i$ under study, along with a set of covariates $\mathbf{x}_i = \left( x_{i,1},\ldots,x_{i,q} \right)^\top \in \mathbb{R}^q\,,$ if available. Specifically, we assume that $Y_i$ follows a distribution from the exponential family, with mean $\mu_i$ and a common scale parameter $\phi\,,$ for $i = 1, \ldots, n\,.$ In the context of spatial regression, we present a **generalized additive model** with Partial Differential Equation (PDE) regularization, which we formulate according to @wilhelm2016generalized, as follows:
 $$g(\mu_i) = \theta_i = \mathbf{x}_i^\top \boldsymbol{\beta} + f(\mathbf{p}_i) \,, \qquad i = 1, \ldots, n,$$
 where:
 
-- $g$ is a continuously differentiable and strictly monotone *canonical link function*, whereas $\theta_i = \theta_i(\boldsymbol{\beta}, f)$ is referred to as the $i$th *canonical parameter*;
+- $g$ is a continuously differentiable and strictly monotone **canonical link function**, whereas $\theta_i = \theta_i(\boldsymbol{\beta}, f)$ is referred to as the $i$th **canonical parameter**;
 
-- $\boldsymbol{\beta} \in \mathbb{R}^q$ is the vector of *unknown regression coefficients* capturing the mean effects of the covariates;
+- $\boldsymbol{\beta} \in \mathbb{R}^q$ is the vector of **unknown regression coefficients** capturing the mean effects of the covariates;
 
-- $f(\mathbf{p}_i) \in \mathbb{R}$ is the *unknown deterministic spatial field* $f : \mathcal{D} \to \mathbb{R}$ at the $i$th data location.
+- $f(\mathbf{p}_i) \in \mathbb{R}$ is the **unknown deterministic spatial field** $f : \mathcal{D} \to \mathbb{R}$ at the $i$th data location.
 
 To estimate the unknown parameters, we refer to the basic form of the regularized methods, as reviewed in @sangalli2021spatial and originally introduced in @sangalli2013spatial. These works propose to maximize the following penalized functional based on the log-likelihood $\ell(\cdot ; \boldsymbol{\theta})$ for the considered distribution:
 $$\sum_{i = 1}^n \ell\left( y_i; \theta_i \right) - R(f; \lambda)\,,$$
-where $R(f; \lambda)$ is the *regularization term* that depends on the *smoothing parameter* $\lambda \in \mathbb{R}^+$. The regularization term is defined using Partial Differential Equations (PDEs), with differential operators encoding the smoothness of $f$ over $\mathcal{D}$. This term may also incorporate problem-specific information into the modeling framework, whenever available. The functional above embodies the trade-off between *data fidelity* and *model fidelity* through the least-squares term and the misfit with respect to the PDE, respectively. The balance between these two contributions is governed by the smoothing parameter. When the considered distribution is Gaussian, the optimization of the functional above coincides with the one that follows from the basic form of spatial regression with PDE regularization.
+where $R(f; \lambda)$ is the **regularization term** that depends on the **smoothing parameter** $\lambda \in \mathbb{R}^+\,.$ The regularization term is defined using PDEs, with differential operators encoding the smoothness of $f$ over $\mathcal{D}\,.$ This term may also incorporate problem-specific information into the modeling framework, whenever available. The functional above embodies the trade-off between *data fidelity* and *model fidelity* through the least-squares term and the misfit with respect to the PDE, respectively. The balance between these two contributions is governed by the smoothing parameter. When the considered distribution is Gaussian, the optimization of the functional above coincides with the one that follows from the basic form of spatial regression with PDE regularization.
 
 In its basic form, the regularization term is given by:
 $$R(f; \lambda) = \lambda \int_\mathcal{D} \left( \Delta f (\mathbf{p}) \right)^2 \, \text{d}\mathbf{p}\,,$$
 where the Laplacian operator is defined as
 $$\Delta f = \frac{\partial^2 f}{\partial p_1^2} + \frac{\partial^2 f}{\partial p_2^2}$$
-and is a measure of the local curvature of the field $f$. More complex roughness penalties may be considered in the regularization term, with the PDE modeling the spatial variation of the unknown spatial field $f$, thereby accounting for spatial non-stationarities and anisotropies, as discussed in @wilhelm2016generalized.
+and is a measure of the local curvature of the field $f\,.$ More complex roughness penalties may be considered in the regularization term, with the PDE modeling the spatial variation of the unknown spatial field $f\,,$ thereby accounting for spatial non-stationarities and anisotropies, as discussed in @wilhelm2016generalized.
 
-The method for Generalized Spatial Regression with Partial Differential Equation regularization presented in this vignette, hereafter referred to as `GSR-PDE`, is implemented within the `fdaPDE` C++/R library [@arnone2025fdapde]. We load the library in the working environment as follows:
+The method for Generalized Spatial Regression with Partial Differential Equation regularization presented in this vignette, hereafter referred to as `GSR-PDE`, is implemented within the newest version of the `fdaPDE` C++ library [@arnone2025fdapde]. We load the library in the working environment as follows:
 
 ```{r fdaPDE, eval=TRUE}
 # Import the fdaPDE library
@@ -73,24 +78,25 @@ theme_set(theme_minimal() +
 
 ## Application to fire count data in Southern Italy
 
-As a benchmark application in environmental sciences, we consider fire count data recorded in Southern Italy, during 2021. In addition to fire counts per administrative division (province), the dataset includes several areal covariates, such as area, elevation, average temperature, solar radiation, total precipitation, population, land use, and land cover, as of 2021. The dataset is freely and publicly available by different data sources, including the [Fire Information for Resource Management System (FIRMS)](https://firms.modaps.eosdis.nasa.gov) of the National Aeronautics and Space Administration (NASA), the [CORINE Land Cover (CLC)](https://land.copernicus.eu/en) from the European Environment Agency (EEA), the [Digital Elevation Model (DEM)](https://tinitaly.pi.ingv.it/Download_Area1_1.html) from the National Institute of Geophysics and Volcanology (INGV), and the [Copernicus ERA5](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-land?tab=overview) from the European Centre for Medium-Range Weather Forecasts (ECMWF) as part of the Copernicus Climate Change Service (C3S). Due to ongoing climate change and global warming, large-scale wildfires are occurring with increasing frequency worldwide, especially in southern Europe. This results in severe repercussions and damage to ecosystems, infrastructures, material assets, and socio-economic activities. Therefore, an in-depth statistical analysis of this phenomenon is becoming crucial for driving the implementation of new policies aimed at preserving both artificial and natural environments.
+As a benchmark application in environmental sciences, we consider *fire count data* recorded in Southern Italy, during 2021. In addition to fire counts per administrative division (province), the dataset also includes several *areal covariates*, such as area, elevation, average temperature, solar radiation, total precipitation, population, land use, and land cover, as of 2021. The dataset is freely and publicly available by different data sources, including the [Fire Information for Resource Management System (FIRMS)](https://firms.modaps.eosdis.nasa.gov) of the National Aeronautics and Space Administration (NASA), the [CORINE Land Cover (CLC)](https://land.copernicus.eu/en) from the European Environment Agency (EEA), the [Digital Elevation Model (DEM)](https://tinitaly.pi.ingv.it/Download_Area1_1.html) from the National Institute of Geophysics and Volcanology (INGV), and the [Copernicus ERA5](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-land?tab=overview) from the European Centre for Medium-Range Weather Forecasts (ECMWF) as part of the Copernicus Climate Change Service (C3S). Due to ongoing climate change and global warming, large-scale wildfires are occurring with increasing frequency worldwide, especially in southern Europe. This results in severe repercussions and damage to ecosystems, infrastructures, material assets, and socio-economic activities. Therefore, an in-depth statistical analysis of this phenomenon is becoming crucial for driving the implementation of new policies aimed at preserving both artificial and natural environments.
 
-### Spatial domain
+### 1. Spatial domain
 We import the preprocessed data observed in Southern Italy during 2021 from the shapefile `../data/GSRPDE_2D/GSRPDE_2D_data.shp` as a `sf` [@pebesma2025sf] object.
 
 ```{r data}
 ## [DATA]
 # Load the data
-data_sf <- st_read(dsn = "../data/GSRPDE_2D/GSRPDE_2D_data.shp")
+data_sf <- st_read(dsn = "../data/GSRPDE_2D/GSRPDE_2D_data.shp", quiet = TRUE)
 head(data_sf)
 
 # Number of data (i.e., of provinces)
 n <- nrow(data_sf)
 ```
 
-Before entering the details about the data, we visualize the boundaries of each province within the spatial domain of interest in Southern Italy. These boundaries are already embedded in the `sf` object loaded above. To enable interactive visualization, we use the `mapview` [@appelhans2025mapview] R package.
+Before discussing the data in detail, we visualize the boundaries of each province within the spatial domain of interest in Southern Italy. These boundaries are already embedded in the `sf` object loaded above. To enable interactive visualization, we use the `mapview` [@appelhans2025mapview] R package.
 
 ```{r mapview_boundaries, fig.width=8.3, fig.height=5}
+## [SPATIAL DOMAIN]
 # Provinces
 provinces_sfc <- st_geometry(obj = data_sf)
 provinces_sf <- st_as_sf(x = provinces_sfc)
@@ -109,7 +115,7 @@ mapview(provinces_sf, col.regions = "gray75", lwd = 1.5,
 Figure 1: Boundaries of each of the 33 provinces in Southern Italy.
 </div>
 
-Now we build a **regular mesh** of the spatial domain above. The mesh provides a discretization of the spatial domain, which is required to solve the estimation problem using the finite element method. To do so, we directly load mesh nodes and triangles from `../data/GSRPDE_2D/GSRPDE_2D_mesh_nodes.txt` and `../data/GSRPDE_2D/GSRPDE_2D_mesh_triangles.txt` files. These files store a matrix of size \#nodes-by-2 containing the $x$ and $y$ coordinates of the mesh nodes, and a matrix of size \#triangles-by-3, where the $i$th row contains the indices of the mesh nodes forming the $i$th triangle. These matrices are obtained using the `femR` [@clemente2025femr] and `RTriangle` [@shewchuk2025RTriangle] R packages; further details are omitted here. Other software can be used to get the triangulation; for example, it can be constructed through the `fmesher` [@lindgren2025fmesher] R package.
+Now we build a **regular mesh** of the spatial domain above. The mesh provides a discretization of the spatial domain, which is required to solve the estimation problem using the finite element method. To do so, we directly load mesh nodes and triangles from `../data/GSRPDE/GSRPDE_mesh_nodes.txt` and `../data/GSRPDE/GSRPDE_mesh_triangles.txt` files. These files store a matrix of size \#nodes-by-2 containing the $x$ and $y$ coordinates of the mesh nodes, and a matrix of size \#triangles-by-3, where the $i$th row contains the indices of the mesh nodes forming the $i$th triangle. These matrices are obtained using the `femR` [@clemente2025femr] and `RTriangle` [@shewchuk2025RTriangle] R packages; further details are omitted here. Other software can be used to get the triangulation; for example, it can be constructed through the `fmesher` [@lindgren2025fmesher] R package.
 
 ```{r mesh}
 ## [MESH]
@@ -136,7 +142,7 @@ head(mesh$nodes)
 mesh$n_nodes
 
 # Edges
-head(mesh$nodes)
+head(mesh$edges)
 
 # Number of edges
 mesh$n_edges
@@ -163,7 +169,7 @@ mapview(boundary_sf,
 ```
 
 <div style="text-align: center;">
-Figure 2: Regular mesh of the spatial domain of interest of Southern Italy with $2\,568$ nodes and $4\,523$ triangles. Note that the mesh conforms to the boundaries of the provinces.
+Figure 2: Regular mesh of the spatial domain of interest of Southern Italy with $2\,563$ nodes and $4\,514$ triangles. Note that the mesh conforms to the boundaries of the provinces.
 </div>
 
 We use the triangulation just created to define the spatial support of a `geoframe` object. This object will host layers containing data observed over the spatial support.
@@ -174,14 +180,27 @@ italy <- geoframe(domain = mesh)
 italy
 ```
 
-### Data
+### 2. Data
 
 We briefly introduce the data under study. We add a data layer to the `geoframe` object defined above, thus obtaining a format compatible with the implementation of the proposed regression method.
 
 ```{r geoframe_layer}
+## [DATA]
 # Add layer with data to the geoframe object (directly from the shapefile)
 italy$load_shp(layer = "fires", filename = "../data/GSRPDE_2D/GSRPDE_2D_data.shp")
 italy
+
+# Variable names
+names(italy[["fires"]])
+
+# Number of variables
+ncol(italy[["fires"]])
+
+# First province polygon nodes
+head(gf_polygons(italy[["fires"]])[[1]]$nodes)
+
+# First province polygon edges
+head(gf_polygons(italy[["fires"]])[[1]]$nodes)
 ```
 
 The variables observed at the province level are given by:
@@ -223,20 +242,21 @@ mapview(italy[["fires"]], crs = 4326, varnames = c("FIRE_COUNT", "POP", "FOREST"
 Figure 3: Fire counts observed at 33 provinces in Southern Italy during 2021 (top left); population measured at the province level as of 2021 (top right); forest and seminatural areas (in $\text{km}^2$) measured at the province level as of 2021 (bottom left); average elevation (in $\text{m}$) measured at the province level as of 2021 (bottom right).
 </div>
 
-First, we focus on the `FIRE_COUNT` variable. The *non-standard shape* of the spatial domain strongly influences the quantity under study. For example, fire counts recorded in the two provinces facing the Strait of Messina, namely the provinces of Messina in Sicily and Reggio-Calabria in Calabria, are not highly correlated. This spatial variation suggests that fire counts depends on factors beyond purely environmental ones (e.g., temperature, elevation, land cover), which typically vary smoothly across space. Specifically, differences in fire counts may be partly due to the varying number of arson incidents reported in 2021 in the two provinces, highlighting the role of unobserved cultural and social phenomena, which may not be fully captured by methods that rely solely on Euclidean distances. Differently, `GSR-PDE` naturally accounts for the geometry of the domain, which may feature disjoint regions with irregular boundaries and concavities, as in the case under consideration.
+First, we focus on the FIRE_COUNT variable. The *non-standard shape* of the spatial domain strongly influences the quantity under study. For example, fire counts recorded in the two provinces facing the Strait of Messina, namely the provinces of Messina in Sicily and Reggio-Calabria in Calabria, are not highly correlated. This spatial variation suggests that fire counts depends on factors beyond purely environmental ones (e.g., temperature, elevation, land cover), which typically vary smoothly across space. Specifically, differences in fire counts may be partly due to the varying number of arson incidents reported in 2021 in the two provinces, highlighting the role of unobserved cultural and social phenomena, which may not be fully captured by methods that rely solely on Euclidean distances. Differently, `GSR-PDE` naturally accounts for the geometry of the domain, which may feature disjoint regions with irregular boundaries and concavities, as in the case under consideration.
 
-### `GSR-PDE` model fitting for Poisson response (without covariates)
+### 3. GSR-PDE model fitting for Poisson response (without covariates)
 
-Now we are ready to perform the `GSR-PDE` spatial regression method using the `gsr` function. This function offers several options for solving the regression problem, including the possibility to specify covariates, PDE parameters, and boundary conditions, whenever available. The function supports several distributions within the exponential family for generalized linear models and can handle areal data, as in the case under study. In addition, the function implements different algorithms for degrees of freedom computation and criteria for optimal smoothing parameter selection. For further information, see the documentation in the Help by typing `?gsr`.
+We are ready to perform the `GSR-PDE` spatial regression method using the `gsr` function. This function offers several options for solving the regression problem, including the possibility to specify covariates, PDE parameters, and boundary conditions, whenever available. The `gsr` function supports several distributions within the exponential family for generalized linear models and can handle areal data, as in the case under study. In addition, the function implements different algorithms for degrees of freedom computation and criteria for optimal smoothing parameter selection. For further information, see the documentation by typing `?gsr`.
 
-#### Isotropic smoothing with optimization of the smoothing parameter via Generalized Cross-Validation (GCV) minimization using grid search
+#### 3.1 Isotropic smoothing with optimal smoothing parameter via Generalized Cross-Validation (GCV) minimization using grid search method
 
-Here, in its simplest form, we apply a penalized Poisson regression without covariates and with isotropic smoothing to the areal fire count data, which corresponds to incorporating the Laplace operator in the regularization term. Specifically, we assume that each response variable $Y_i$ is Poisson-distributed with mean $\mu_i$, for $i = 1,\ldots,n$, with $n = 33$ being the number of provinces in the dataset. We consider the following model:
+Here, in its simplest form, we apply a penalized Poisson regression without covariates and with isotropic smoothing to the areal fire count data, which corresponds to incorporating the Laplace operator in the regularization term. Specifically, we assume that each response variable $Y_i$ is Poisson-distributed with mean $\mu_i\,,$ for $i = 1,\ldots,n\,,$ with $n = 33$ being the number of provinces in the dataset. We consider the following model:
 $$\log(\mu_i) = \theta_i = f(\mathbf{p}_i) \,, \qquad i = 1, \ldots, n\,.$$
-This can be achieved by specifying the option `family = poisson` as a parameter of the `smooth.FEM` function. We select the optimal value for the smoothing parameter $\lambda$ by minimizing the Generalized Cross-Validation (GCV) index on a finite grid of proposed values. To this end, we perform a stochastic computation of the degrees of freedom, using $1\,000$ Monte-Carlo realizations for its estimation.
+This can be achieved by specifying the option `family = poisson` as a parameter of the `gsr` function. We select the optimal value for the smoothing parameter $\lambda$ by minimizing the **Generalized Cross-Validation** (GCV) index on a finite grid of proposed values. To this end, we perform a stochastic computation of the degrees of freedom.
 
 ```{r solution_grid, results="hide"}
-# Set up the finite element function
+## [ISOTROPIC SMOOTHING WITH OPTIMAL SMOOTHING PARAMETER]
+# Set up the finite element function (order 1)
 f_grid <- fe_function(mesh, type = "P1")
 
 # Proposed values for the smoothing parameter
@@ -267,7 +287,7 @@ grid_residuals <- c(italy[["fires"]]$FIRE_COUNT - model_grid$fitted)
 summary(grid_residuals)
 ```
 
-Moreover, it is possible to inspect the behavior of the GCV indices as a function of the values proposed for the smoothing parameter $\lambda$.
+Moreover, it is possible to inspect the behavior of the GCV indices as a function of the values proposed for the smoothing parameter $\lambda\,.$
 
 ```{r solution_GCV, fig.width=8.3, fig.height=5}
 # Optimal value selected for the smoothing parameter
@@ -277,61 +297,56 @@ lambda_opt_grid
 # Plot of the GCV curve
 par(family = "serif")
 plot(x = log10(lambda_grid), y = fit_grid$values, type = 'b',
-     lwd = 2, xlab = TeX("$\\log(\\lambda)$"), ylab = "GCV")
+     lwd = 2, xlab = TeX("$\\log_{10}(\\lambda)$"), ylab = "GCV")
 grid()
 abline(v = log10(lambda_opt_grid), lty = 2, lwd = 2, col = "royalblue")
 legend("topleft", lty = 2, lwd = 2, col = "royalblue",
-       legend = TeX("$\\log(\\lambda_{opt})"))
+       legend = TeX("$\\log_{10}(\\lambda_{opt})"))
 ```
 
 <div style="text-align: center;">
 Figure 4: GCV curve.
 </div>
 
-The GCV curve is convex with minimum realized at the optimal value selected by the method -- specifically, 0.03162278.
+The GCV curve is convex with minimum realized at the optimal value selected by the method -- specifically, $0.03162278\,.$
 
 The regression model fit over the provinces of interest is displayed below (left). For qualitative comparison, the fire count data is also displayed (right).
 
 ```{r mapview_solution_grid_fit, fig.width=8.3, fig.height=5}
 # Compute areal estimate by province
-
-f_grid$integral()
-
-#gf_polygons(italy)
-
-#italy[["fires"]][["gf_ptr_"]]$incidence_matrix
-#italy[["fires"]]$incidence_matrix()
-#f_areal_grid <- 
+f_grid_areal <- eval_areal(x = f_grid, layer = italy[["fires"]], crs = 4326)
 
 # Interactive plot
-#map1 <- mapview(f_areal_grid, crs = 4326, col.regions = inferno,
-#                na.color = "transparent", layer.name = "SST [°C]") +
-#  mapview(domain, col.regions = "transparent", alpha.regions = 0,
-#          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+map1 <- mapview(f_grid_areal, col.regions = color_palette_fire_counts,
+                na.color = "transparent", layer.name = "ESTIMATE") +
+ mapview(boundary_sf,
+         col.regions = "transparent", alpha.regions = 0.25, col = "black", lwd = 1.5,
+         legend = FALSE, layer.name = "domain")
 
-#map2 <- mapview(SST - 273.15, col.regions = inferno, na.color = "transparent",
-#                layer.name = "SST [°C]") +
-#  mapview(domain, col.regions = "transparent", alpha.regions = 0,
-#          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+map2 <- mapview(italy[["fires"]], crs = 4326, varnames = "FIRE_COUNT",
+                color_palettes = list(color_palette_fire_counts)) +
+ mapview(boundary_sf,
+         col.regions = "transparent", alpha.regions = 0.25, col = "black", lwd = 1.5,
+         legend = FALSE, layer.name = "domain")
 
-#sync(map1, map2)
+sync(map1, map2)
 ```
 
 <div style="text-align: center;">
-Figure 5: Estimated fire count spatial field provided by the isotropic `GSR-PDE` for each province (without covariates) with $\lambda$ selected via GCV minimization using grid search (left) and fire count data observed at 33 provinces in Southern Italy during 2021 (right). We recall that the latter are not used for estimation purposes; they are displayed here solely to allow comparison with the fire counts estimate computed by the proposed `GSR-PDE` method based on the observations loaded above.
+Figure 5: Estimated spatial field of the fire counts provided by the isotropic `GSR-PDE` for each province without covariates and with $\lambda$ selected via GCV minimization using grid search method (left); fire counts observed at 33 provinces in Southern Italy during 2021 (right). We recall that the latter are not used for estimation purposes; they are displayed here solely to allow comparison with the fire counts estimate computed by the proposed `GSR-PDE` method based on the observations loaded above.
 </div>
 
 The smoothing fit already appears very accurate.
 
-#### Poisson regression and intensity estimation
+#### 3.2 Poisson regression and intensity estimation
 
-We now show the pointwise spatial prediction. To evaluate the regression model fit over a fine grid and enable interactive visualization of the estimate, we internally create a new `raster` object. We then compute the fitted values over the grid using the `$eval` method. We plot the resulting estimate with `mapview`: this is just one possibility; various other plotting options are available depending on the specific purpose.
+We show the pointwise spatial prediction. To evaluate the regression model fit over a fine grid and enable interactive visualization of the estimate, we internally create a new `raster` object. Then we compute the fitted values over the grid using the `$eval` method. We plot the resulting estimate with `mapview`: this is just one possibility; various other plotting options are available depending on the specific purpose.
 
 The regression model fit over the fine grid is displayed below (left). In addition, we load and show the point pattern associated with the locations of fires occurred in 2021 (right).
 
 ```{r mapview_solution_point, fig.width=8.3, fig.height=5}
 # Load locations of fires
-locations <- st_read(dsn = "../data/GSRPDE_2D/GSRPDE_2D_locations.shx")
+locations <- st_read(dsn = "../data/GSRPDE_2D/GSRPDE_2D_locations.shx", quiet = TRUE)
 
 # Interactive plot
 map1 <- mapview(f_grid, crs = 4326, col.regions = color_palette_fire_counts,
@@ -350,15 +365,15 @@ sync(map1, map2)
 ```
 
 <div style="text-align: center;">
-Figure 6: Estimated spatial field of the fire counts provided by the isotropic `GSR-PDE` (without covariates) with $\lambda$ selected via GCV minimization using grid search (left); locations of fires occurred in Southern Italy in 2021 (right).
+Figure 6: Estimated spatial field of the fire counts provided by the isotropic `GSR-PDE` without covariates and with $\lambda$ selected via GCV minimization using grid search method (left); locations of fires occurred in Southern Italy in 2021 (right).
 </div>
 
 In particular, by focusing on the spatial point pattern rather than aggregated counts, the Poisson regression and the inhomogeneous Poisson point process share equivalent modeling structures, enabling a direct comparison of their pointwise intensity estimates. For density and intensity estimation with PDE regularization, see @ferraccioli2021nonparametric and @begu2024nonparametric.
 
-### `GSR-PDE` model fitting for Poisson response (future developments)
+### 4. Future developments
 
-The phenomenon under study is influenced by several factors, including the average elevation, the population, the type of territory, as well as the amount of artificial areas, agricultural areas, forest and seminatural areas, wetlands and water bodies, all measured at the province level as of 2021. The proposed `GSR-PDE` method can accommodate these covariates into the modeling framework. We consider the three covariates shown above -- population, average elevation (in $\text{m}$), and forest and seminatural areas (in $\text{km}^2$) -- by province, as of 2021. These covariates could be included into the modeling framework of `GSR-PDE` to further explain the fire count data in Southern Italy.
+The phenomenon under study is influenced by several factors, including the average elevation, the population, the type of territory, as well as the extent of artificial areas, agricultural areas, forest and seminatural areas, wetlands and water bodies, all measured at the province level as of 2021. These covariates could be incorporated into the `GSR-PDE` modeling framework to better explain fire count data in Southern Italy.
 
-Moreover, as a future development, this model fitting could leverage problem-specific information derived from the physics of underlying factors influencing the phenomenon considered here. In particular, the regularization term could incorporate a partial differential equation accounting for the presence of wind across the provinces.
+Moreover, as a future development, the model fitting could leverage problem-specific information derived from the physics of the underlying factors influencing the phenomenon considered here. In particular, the regularization term could incorporate a PDE accounting for the presence of wind across the provinces.
 
 ## References

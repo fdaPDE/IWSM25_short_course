@@ -39,7 +39,7 @@ with a fully configured environment that includes the development version of the
     Additionally, we recommend installing the following R packages:
 
     ```
-    install.packages(c("ggmap", "ggplot2", "latex2exp", "leafsync", 
+    install.packages(c("fields", "ggmap", "ggplot2", "latex2exp", "leafsync", 
                         "mapview", "patchwork", "R6", "Rcpp", "RcppEigen",
                         "RTriangle", "raster", "sf", "viridis"))
 

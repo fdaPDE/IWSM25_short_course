@@ -5,7 +5,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   message = FALSE,
-  warning = FALSE
+  warning = FALSE,
+  root.dir = "$(pwd)/../"
 )
 
 
@@ -32,7 +33,7 @@ theme_set(theme_minimal() +
 ## ----data---------------------------------------------------------------------
 ## [DATA]
 # Load the data
-data_sf <- st_read(dsn = "../data/GSRPDE_2D/GSRPDE_2D_data.shp")
+data_sf <- st_read(dsn = "../data/GSRPDE_2D/GSRPDE_2D_data.shp", quiet = TRUE)
 head(data_sf)
 
 # Number of data (i.e., of provinces)
@@ -40,6 +41,7 @@ n <- nrow(data_sf)
 
 
 ## ----mapview_boundaries, fig.width=8.3, fig.height=5--------------------------
+## [SPATIAL DOMAIN]
 # Provinces
 provinces_sfc <- st_geometry(obj = data_sf)
 provinces_sf <- st_as_sf(x = provinces_sfc)
@@ -79,7 +81,7 @@ head(mesh$nodes)
 mesh$n_nodes
 
 # Edges
-head(mesh$nodes)
+head(mesh$edges)
 
 # Number of edges
 mesh$n_edges
@@ -110,9 +112,22 @@ italy
 
 
 ## ----geoframe_layer-----------------------------------------------------------
+## [DATA]
 # Add layer with data to the geoframe object (directly from the shapefile)
 italy$load_shp(layer = "fires", filename = "../data/GSRPDE_2D/GSRPDE_2D_data.shp")
 italy
+
+# Variable names
+names(italy[["fires"]])
+
+# Number of variables
+ncol(italy[["fires"]])
+
+# First province polygon nodes
+head(gf_polygons(italy[["fires"]])[[1]]$nodes)
+
+# First province polygon edges
+head(gf_polygons(italy[["fires"]])[[1]]$nodes)
 
 
 ## ----mapview_data, fig.width=8.3, fig.height=5--------------------------------
@@ -131,7 +146,8 @@ mapview(italy[["fires"]], crs = 4326, varnames = c("FIRE_COUNT", "POP", "FOREST"
 
 
 ## ----solution_grid, results="hide"--------------------------------------------
-# Set up the finite element function
+## [ISOTROPIC SMOOTHING WITH OPTIMAL SMOOTHING PARAMETER]
+# Set up the finite element function (order 1)
 f_grid <- fe_function(mesh, type = "P1")
 
 # Proposed values for the smoothing parameter
@@ -168,41 +184,36 @@ lambda_opt_grid
 # Plot of the GCV curve
 par(family = "serif")
 plot(x = log10(lambda_grid), y = fit_grid$values, type = 'b',
-     lwd = 2, xlab = TeX("$\\log(\\lambda)$"), ylab = "GCV")
+     lwd = 2, xlab = TeX("$\\log_{10}(\\lambda)$"), ylab = "GCV")
 grid()
 abline(v = log10(lambda_opt_grid), lty = 2, lwd = 2, col = "royalblue")
 legend("topleft", lty = 2, lwd = 2, col = "royalblue",
-       legend = TeX("$\\log(\\lambda_{opt})"))
+       legend = TeX("$\\log_{10}(\\lambda_{opt})"))
 
 
 ## ----mapview_solution_grid_fit, fig.width=8.3, fig.height=5-------------------
 # Compute areal estimate by province
-
-f_grid$integral()
-
-#gf_polygons(italy)
-
-#italy[["fires"]][["gf_ptr_"]]$incidence_matrix
-#italy[["fires"]]$incidence_matrix()
-#f_areal_grid <- 
+f_grid_areal <- eval_areal(x = f_grid, layer = italy[["fires"]], crs = 4326)
 
 # Interactive plot
-#map1 <- mapview(f_areal_grid, crs = 4326, col.regions = inferno,
-#                na.color = "transparent", layer.name = "SST [°C]") +
-#  mapview(domain, col.regions = "transparent", alpha.regions = 0,
-#          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+map1 <- mapview(f_grid_areal, col.regions = color_palette_fire_counts,
+                na.color = "transparent", layer.name = "ESTIMATE") +
+ mapview(boundary_sf,
+         col.regions = "transparent", alpha.regions = 0.25, col = "black", lwd = 1.5,
+         legend = FALSE, layer.name = "domain")
 
-#map2 <- mapview(SST - 273.15, col.regions = inferno, na.color = "transparent",
-#                layer.name = "SST [°C]") +
-#  mapview(domain, col.regions = "transparent", alpha.regions = 0,
-#          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+map2 <- mapview(italy[["fires"]], crs = 4326, varnames = "FIRE_COUNT",
+                color_palettes = list(color_palette_fire_counts)) +
+ mapview(boundary_sf,
+         col.regions = "transparent", alpha.regions = 0.25, col = "black", lwd = 1.5,
+         legend = FALSE, layer.name = "domain")
 
-#sync(map1, map2)
+sync(map1, map2)
 
 
 ## ----mapview_solution_point, fig.width=8.3, fig.height=5----------------------
 # Load locations of fires
-locations <- st_read(dsn = "../data/GSRPDE_2D/GSRPDE_2D_locations.shx")
+locations <- st_read(dsn = "../data/GSRPDE_2D/GSRPDE_2D_locations.shx", quiet = TRUE)
 
 # Interactive plot
 map1 <- mapview(f_grid, crs = 4326, col.regions = color_palette_fire_counts,

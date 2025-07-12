@@ -21,49 +21,55 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   message = FALSE,
-  warning = FALSE
+  warning = FALSE,
+  root.dir = "$(pwd)/../"
 )
 ```
 
-## Quantile Regression
+`fdaPDE` [@arnone2025fdapde] is a C++ library with an interface to R for *physics-informed spatial and functional data analysis*, at the intersection of statistics and numerical analysis. The library provides advanced statistical methods designed for data located over complex spatial domains, ranging from irregular planar regions and curved surfaces to linear networks and volumes, possibly evolving over time. The class of methods implemented in `fdaPDE` features regularization terms based on Partial Differential Equations (PDEs), which allow incorporating information derived from the physics of the problem under study into the statistical modeling. This makes `fdaPDE` an extremely flexible tool for the analysis of complex data. For a review of this class of methods, refer to @sangalli2021spatial.
 
-Regression analysis is a flexible and widely used method for studying how a response variable behaves conditionally on a set of covariates. However, the conditional mean can be uninformative when the data substantially deviate from the Gaussian assumption, a scenario frequently encountered in real-world data. Quantile regression models overcome this limitation, providing a flexible framework for the analysis of tail characteristics of the response variable.
+`fdaPDE` offers a wide range of modeling capabilities -- including regression, nonparametric density estimation, functional data analysis, and more -- for data located over a spatial domain, possibly evolving over time. Among the broad range of modeling capabilities offered by `fdaPDE`, we focus here on the **quantile spatial regression method**.
 
-## 1. Quantile Spatial Regression with Partial Differential Equations regularization
+## Nonparametric model
 
-The Quantile Spatial Regression with Partial Differential Equations Regularization (`QSR-PDE`) methodology provides estimates of spatial quantile fields for complex spatial phenomena [@castiglione2025pde]. The model is especially useful when data show skewness, heteroscedasticity, or extreme values, and when these features change across space due to physical factors (like wind streams or water currents). The method combines the quantile regression framework with spatial smoothing based on Partial Differential Equations (PDEs).
+Regression analysis is a widely used tool for studying how a response variable behaves conditionally on a set of covariates. However, when data substantially deviate from the Gaussian assumption -- a scenario frequently encountered in real-world applications -- the conditional mean may be uninformative and provide limited insight. Quantile regression models overcome this limitation by offering a flexible framework to analyze the entire conditional distribution, particularly the tail characteristics of the response variable.
 
-Given a real-valued random variable $Y$, we consider $n$ realizations $\left\{y_i\right\}_{i=1}^n \subset \mathbb{R}$ gathered on point locations $\left\{\mathbf{p}_i\right\}_{i=1}^n \subset \mathcal{D}$, on a spatial domain $\mathcal{D} \subset \mathbb{R}^d$, $d\geq1$. Our aim is to estimate the corresponding *unknown* $\alpha-$quantile function $f_\alpha : \mathcal{D} \to \mathbb{R}$, for any probability level $\alpha \in (0,1)$. The *nonparametric spatial regression model* for the $\alpha-$quantile reads as: $$Q_{Y_i|\mathbf{p}_i}(\alpha) = f_\alpha(\mathbf{p}_i),  \quad \quad i=1,...,n $$ The unknown quantile spatial field $f_\alpha$ is estimated by minimizing the *penalized loss functional*: $$  J_\alpha(f) = \frac{1}{n} \sum_{i=1}^n \rho_{\alpha}(y_i - f(\mathbf{p}_i)  ) \ + \lambda \int_\mathcal{D} (Lf(\mathbf{p}) - u(\mathbf{p}))^2 d\mathbf{p}\ ,$$
+To estimate spatial quantile fields for complex spatial phenomena, we refer to the method introduced in @castiglione2025pde. The proposed model is particularly effective when the data exhibit skewness, heteroscedasticity, or extreme values -- especially when these characteristics vary across space due to physical factors such as wind streams or water currents. The method combines the quantile regression framework with spatial smoothing driven by Partial Differential Equations (PDEs).
 
-which balances a data fidelity term, expressed by the pinball loss function $\rho_\alpha(t) = \frac{1}{2}|t|-(\frac{1}{2}-\alpha)t$ , with a regularization term based on a problem-specific PDE. The trade-off between these two terms is controlled by the smoothing parameter $\lambda$, selected according to the Generalized Cross-Validation strategy.
+Given a real-valued random variable $Y\,,$ we consider $n$ realizations $\left\{y_i\right\}_{i=1}^n \subset \mathbb{R}\,,$ each observed at specific spatial locations $\left\{\mathbf{p}_i\right\}_{i=1}^n \subset \mathcal{D}\,,$ where $\mathcal{D} \subset \mathbb{R}^d\,,$ for $d\geq1\,,$ denotes the *spatial domain* under consideration. Our aim is to estimate the corresponding unknown $\alpha-$*quantile function* $f_\alpha : \mathcal{D} \to \mathbb{R}\,,$ for any probability level $\alpha \in (0,1)\,.$ The **nonparametric spatial regression** model for the $\alpha-$quantile reads as:
+$$Q_{Y_i|\mathbf{p}_i}(\alpha) = f_\alpha(\mathbf{p}_i)\,,  \quad \quad i=1,...,n\,. $$
+We estimate the unknown quantile spatial field $f_\alpha$ by minimizing the **penalized loss functional**:
+$$  J_\alpha(f) = \frac{1}{n} \sum_{i=1}^n \rho_{\alpha}(y_i - f(\mathbf{p}_i)  ) \ + \lambda \int_\mathcal{D} (Lf(\mathbf{p}) - u(\mathbf{p}))^2 \, d\mathbf{p} \,,$$
 
-Estimation is performed using the Expectation-Maximization algorithm. Then, the resulting infinite-dimensional solution is discretized through Finite Element Method (FEM) over a computational mesh that approximates the spatial domain $\mathcal{D}$. FEM ensures computational efficiency and enables accurate analysis of data scattered over irregularly shaped domains.
+which balances a *data fidelity* term, expressed by the **pinball loss function** $\rho_\alpha(t) = \frac{1}{2}|t|-(\frac{1}{2}-\alpha)t\,,$ with a **regularization term** based on a problem-specific PDE. The trade-off between these two terms is controlled by the **smoothing parameter** $\lambda\,.$ The optimal value of the smoothing parameter is selected via **Generalized Cross-Validation** (GCV) minimization.
 
-In the next section we show how to include spatial covariates into the model.
+Estimation is performed using the **Expectation-Maximization** (EM) algorithm. Then, the resulting infinite-dimensional solution is discretized through **Finite Element Method** (FEM) over a computational mesh that approximates the spatial domain $\mathcal{D}\,.$ FEM ensures computational efficiency and enables accurate analysis of data scattered over irregularly shaped domains.
 
-### 1.1 Semiparametric Quantile Spatial Regression with PDE regularization
+## Semiparametric model
 
-The model presented above can be easily generalized to include spatial covariates into the model. Let $\left\{\mathbf{x}_i\right\}_{i=1}^n \subset \mathbb{R}^q$ be a vector of $q$ spatial covariates measured at the point locations $\left\{\mathbf{p}_i\right\}_{i=1}^n$ . The *semiparametric spatial regression model* for the $\alpha-$quantile reads as: $$Q_{Y_i|\mathbf{x}_i, \mathbf{p}_i}(\alpha) = \mathbf{x}_i^\top \boldsymbol{\beta}_\alpha + f_\alpha(\mathbf{p}_i),  \quad \quad i=1,...,n. $$
+The considered modeling framework can be easily generalized to include spatial covariates, thus obtaining a semiparametric version of the previous model. Let $\left\{\mathbf{x}_i\right\}_{i=1}^n \subset \mathbb{R}^q$ be a vector of $q$ spatial covariates measured at the locations $\left\{\mathbf{p}_i\right\}_{i=1}^n\,.$ The **semiparametric spatial regression model** for the $\alpha-$quantile reads as:
+$$Q_{Y_i|\mathbf{x}_i, \mathbf{p}_i}(\alpha) = \mathbf{x}_i^\top \boldsymbol{\beta}_\alpha + f_\alpha(\mathbf{p}_i)\,, \quad \quad i=1,...,n\,.$$
 
-We can now jointly estimate the unknown vector of coefficients $\boldsymbol{\beta}_\alpha$ and the quantile spatial field $f_\alpha$ including the parametric term into the data fidelity criterion of the *penalized loss functional* as follows:$$  J_\alpha(f) = \frac{1}{n} \sum_{i=1}^n \rho_{\alpha}(y_i - \mathbf{x}_i^\top \boldsymbol{\beta}- f(\mathbf{p}_i)  ) \ + \lambda \int_\mathcal{D} (Lf(\mathbf{p}) - u(\mathbf{p}))^2 d\mathbf{p}\. $$
+We can now jointly estimate the unknown vector of *coefficients* $\boldsymbol{\beta}_\alpha$ and the *quantile spatial field* $f_\alpha\,.$ To do so, we include the parametric term into the data fidelity criterion of the **penalized loss functional** as follows:
+$$  J_\alpha(f) = \frac{1}{n} \sum_{i=1}^n \rho_{\alpha}(y_i - \mathbf{x}_i^\top \boldsymbol{\beta}- f(\mathbf{p}_i)  ) \ + \lambda \int_\mathcal{D} (Lf(\mathbf{p}) - u(\mathbf{p}))^2 \, d\mathbf{p}\,.$$
 
-Finally, the estimation and the discretization procedures proceed as for the *nonparametric model*.
+Finally, the estimation and discretization procedures follow the same steps as in the nonparametric model.
 
-### 1.2 Application study on Switzerland rainfall data
-
-As a benchmark application, we analyze the Switzerland rainfall dataset, which collects $462$ rainfall measurements (in $10 \mu m$ units) recorded on May 8, 1986 [@dubois2003mapping]. Starting from this set of georeferenced data, the goal is to estimate spatial quantile maps of the rainfall distribution. We show estimates for both $50\%$ and $90\%$ quantile fields, to compare the median tendency of the phenomenon with tail bevahiour, assessing whether some regions are more prone to experience extreme values and to identify potential spatial patterns associated with high-risk events.
-
-We first import the `fdaPDE` library, together with additional meshing and graphics libraries.
-
-```{r library fdaPDE, eval=TRUE}
+The method for Quantile Spatial Regression with Partial Differential Equation regularization presented in this vignette, hereafter referred to as `QSR-PDE`, is implemented within the newest version `fdaPDE` C++ library [@arnone2025fdapde]. We load the library in the working environment as follows:
+  
+```{r fdaPDE, eval=TRUE}
 # Import the fdaPDE library
 library(fdaPDE2)           # v. 2.0 (2025)
 rm(list = ls())
 
 # Load additional libraries and helper functions for plotting
 source("../utils/graphics.R")
-
 ```
+
+
+## Application to Switzerland rainfall data
+
+As a benchmark application in enviornmental sciences, we analyze the **Switzerland rainfall dataset**, which collects $462$ rainfall measurements (in $10 \, \mu m$ units) recorded on May 8, 1986. This dataset is well known in the statistical community, with several studies dedicated to its analysis, including @dubois2003mapping and @dubois2007automatic. Starting from this set of georeferenced data, the goal is to estimate spatial quantile maps of the rainfall distribution. To compare the median tendency of the phenomenon with tail behavior, we focus on the estimates for both $50\%$ and $90\%$ quantile fields, assessing whether some regions are more prone to experience extreme values and to identify potential spatial patterns associated with high-risk events.
 
 ```{r theme, echo=FALSE}
 theme_set(theme_minimal() +
@@ -76,225 +82,309 @@ theme_set(theme_minimal() +
 )
 ```
 
-Now we build a **regular mesh** of the spatial domain under consideration. We create a mesh based on boundary nodes and segments, and then we refine it by setting the maximum element area to 0.0045 and the minimum angle to 30 degrees. The triangulation is constructed using the `RTriangle` [@shewchuk2025RTriangle] R package. 
+### 1. Spatial domain
 
-```{r geometry, fig.width=8, fig.height=5}
-# Import the boundary nodes and segments of the domain of interest
-boundary_nodes    <- read.table(file = "../data/QSRPDE_2D/QSRPDE_2D_boundary_nodes.txt",
-                                header = TRUE)
-boundary_segments <- read.table(file = "../data/QSRPDE_2D/QSRPDE_2D_boundary_segments.txt")
- 
-# Define a planar straight-line graph modeling the Switzerland boundary
-p <- pslg(
-  P = boundary_nodes,
-  S = boundary_segments  
-)
-mesh <- triangulate(p, Y = FALSE, D = TRUE)
+First, we load the boundary nodes of our domain of interest, which are stored sequentially in a clockwise order. We then construct the matrix of boundary segments, with each row containing the indices of the boundary nodes that define a segment.
+
+```{r domain}
+## [SPATIAL DOMAIN]
+# Load the boundary nodes
+boundary_nodes <- read.table(file = "../data/QSRPDE_2D/QSRPDE_2D_boundary_nodes.txt",
+                             header = TRUE)
+
+# Create boundary segments (consecutive boundary nodes are connected)
+boundary_segments <- cbind(1:(nrow(boundary_nodes)-1), 2:nrow(boundary_nodes))
+
+# Close the loop (connect the last node to the first)
+boundary_segments <- rbind(boundary_segments, c(nrow(boundary_nodes), 1))
+```
+
+The domain can be interactively visualized using the `mapview` [@appelhans2025mapview] R package, once boundary nodes are converted into a `sf` [@pebesma2025sf] object.
+
+```{r mapview_boundary, fig.width=8.3, fig.height=5}
+# Convert boundary into a sf object
+boundary_nodes_sf <- st_as_sf(x = rbind(boundary_nodes, boundary_nodes[1,]),
+                              coords = c("lon", "lat"), crs = 4326)
+boundary_polygon <- st_polygon(list(st_coordinates(boundary_nodes_sf)))
+boundary_sfc <- st_sfc(geometry = boundary_polygon, crs = 4326)
+boundary_sf <- st_sf(geometry = boundary_sfc)
+
+# Interactive plot
+mapview(boundary_sf,
+        col.regions = "gray25", alpha.regions = 0.25, col = "black", lwd = 1.5,
+        legend = FALSE, layer.name = "domain")
+```
+
+<div style="text-align: center;">
+Figure 1: Spatial domain of interest – Switzerland.
+</div>
+
+Now we build a **regular mesh** of the spatial domain under consideration. We create a mesh based on boundary nodes and segments, and then we refine it by setting the maximum element area to $0.0045$ and the minimum angle to 30 degrees. The triangulation is constructed using the `RTriangle` [@shewchuk2025RTriangle] R package. Other software can be used to get the triangulation; for example, it can be constructed through the `fmesher` [@lindgren2025fmesher] R package.
+
+```{r geometry, fig.width=8.3, fig.height=5}
+# Define a planar straight-line graph object
+p <- pslg(P = boundary_nodes, S = boundary_segments)
+
+# Create a regular mesh of the spatial domain
+mesh <- triangulate(p = p, Y = FALSE, D = TRUE)
 if (is.null(mesh$H)) mesh$H <- matrix(numeric(0), ncol = 2)
-mesh <- triangulate(mesh, a = 0.0045, q = 30, D = TRUE) ## ruppert's refinement
 
+# Refine the mesh of the spatial domain
+mesh <- triangulate(mesh, a = 0.0045, q = 30, D = TRUE)
 ```
 
-Finally, for the purpose of visualization, we convert the mesh and its boundary into a `sf` object [@pebesma2025sf].
+We convert the `triangulation` object from RTriangle so that it can be read by `fdaPDE`.
 
+```{r triangulation, fig.width=8.3, fig.height=5}
+# Set up the triangulation for fdaPDE
+mesh = triangulation(nodes = mesh$P, cells = mesh$T, boundary = mesh$PB)
 
-```{r geometry_sf, fig.width=8, fig.height=5}
-# create sf mesh object
-mesh_sfc = st_as_sfc(mesh)
-mesh_sf = st_as_sf(mesh_sfc, crs = 4326)
-boundary_sf = st_boundary(st_union(mesh_sf))
+# Nodes coordinates
+head(mesh$nodes)
 
+# Number of nodes
+mesh$n_nodes
+
+# Edges
+head(mesh$edges)
+
+# Number of edges
+mesh$n_edges
+
+# Triangles
+head(mesh$cells)
+
+# Number of triangles
+mesh$n_cells
+
+# Bounding box
+mesh$bbox
 ```
 
-We convert the `triangulation` object from `RTriangle` so that it can be read by `fdaPDE`.
+We visualize the resulting mesh of the spatial domain of interest.
 
-```{r triangulation, fig.width=8, fig.height=5}
-switzerland = triangulation(nodes = mesh$P, cells = mesh$T, boundary = mesh$PB)
-```
-
-The resulting regular mesh of the domain of interest can be interactively visualized using the `mapview` [@appelhans2025mapview] R package.
-
-```{r mesh, fig.width=8.25, fig.height=5}
-mapview(switzerland, crs = 4326, map.type = "CartoDB.Positron", 
+```{r mesh, fig.width=8.3, fig.height=5}
+# Interactive plot
+mapview(boundary_sf,
+        col.regions = "gray25", alpha.regions = 0.25, col = "black", lwd = 1.5,
+        legend = FALSE, layer = "domain") +
+  mapview(mesh, crs = 4326,
           col.regions = "transparent", lwd = 1.25, legend = FALSE, layer = "mesh")
 ```
 
 <div style="text-align: center;">
-Figure 1: Regular mesh of the Switzerland domain with $1\,128$ nodes and $2\,077$ triangles.
+Figure 2: Regular mesh of the Switzerland domain with $1\,128$ nodes and $2\,077$ triangles.
 </div>
 
-We use the triangulation just created to define the spatial support of a `geoframe` object. This object will host layers containing data observed over the spatial support. We load the rainfall data into the object of class `gf`.
+We use the triangulation just created to define the spatial support of a `geoframe` object. This object will host layers containing data observed over the spatial support.
 
-```{r data, fig.width=8, fig.height=5}
-data <- read.table(file = "../data/QSRPDE_2D/QSRPDE_2D_data.txt", header=TRUE)
-
-gf <- geoframe(domain = switzerland)
-gf$insert(layer = "rainfall", type = "point", geo = c("lon", "lat"), data = data)
-gf
+```{r data, fig.width=8.3, fig.height=5}
+switzerland <- geoframe(domain = mesh)
 ```
 
-To visualize the rainfall distribution, we plot the data scattered over the Switzerland region both in the original scale and in the logarithmic scale.
+### 2. Data
 
-```{r mapview_data, fig.width=8.25, fig.height=5}
-# # Interactive plot
-# mapview(gf[["rainfall"]], crs = 4326, 
-#         color_palettes = list("mako", "mako")) 
+We import the preprocessed data from the file `../data/QSRPDE_2D/QSRPDE_2D_data.txt` as a `data.frame` object. We add a data layer to the geoframe object defined above, thus obtaining a format compatible with the implementation of the proposed regression method.
 
+```{r load data}
+## [DATA]
+# Load the data
+data <- read.table(file = "../data/QSRPDE_2D/QSRPDE_2D_data.txt", header = TRUE)
+head(data)
 
+# Add layer with data to the geoframe object
+switzerland$insert(layer = "rainfall", type = "point", geo = c("lon", "lat"), 
+                   data = data)
+switzerland
 
-map1 <- mapview(gf[["rainfall"]], crs = 4326, color_palettes = list("mako"), 
-                varnames = "rainfall", na.color = "transparent",
+# Variable names
+names(switzerland[["rainfall"]])
+
+# Number of variables
+ncol(switzerland[["rainfall"]])
+
+# Locations of measurement stations (lon, lat)
+head(gf_locations(switzerland[["rainfall"]]))
+```
+
+To visualize the rainfall distribution, we plot the data across the Switzerland region in both the original and logarithmic scales.
+
+```{r mapview_data, fig.width=8.3, fig.height=5}
+map1 <- mapview(switzerland[["rainfall"]], varnames = "rainfall", crs = 4326,
+                color_palettes = list("mako"), na.color = "transparent",
                 layer.name = "rainfall") +
   mapview(boundary_sf, col.regions = "transparent", alpha.regions = 0,
           col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
 
-map2 <- mapview(gf[["rainfall"]], crs = 4326, color_palettes = list("mako"), 
-                varnames = "log.rainfall", na.color = "transparent",
-                layer.name = "rainfall") +
+map2 <- mapview(switzerland[["rainfall"]], crs = 4326, varnames = "log.rainfall",
+                color_palettes = list("mako"), na.color = "transparent",
+                layer.name = "log.rainfall") +
   mapview(boundary_sf, col.regions = "transparent", alpha.regions = 0,
           col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
 
 sync(map1, map2)
-
-
 ```
 
 <div style="text-align: center;">
-Figure 2: Switzerland rainfall data gathered over $462$ locations, in original scale (left panel) and in logarithmic scale (right panel).
+Figure 3: Switzerland rainfall data collected at $462$ locations, shown in the original scale (left) and in logarithmic scale (right).
 </div>
 
-We can see as data exhibit strong anisotropic patterns over the domain. To capture this evident anisotropy in the data, we incorporate a stationary anisotropic diffusion term into the model, by defining the differential operator as $$Lf(\mathbf{p}) = \text{div}(\mathbf{K}\nabla f(\mathbf{p})) \quad \forall \mathbf{p} \in \mathcal{D}.$$ The anisotropy tensor $\mathbf{K}$ is estimated using the Parameter Cascading algorithm [@bernardi2018modeling], yielding an orientation angle of $140^\circ (2.45 \ \text{rad})$ and an intensity of anisotropy of $6.00$.
+### 3. QSR-PDE model fitting for physics-informed smoothing
 
-We can now compute the physics-informed quantile spatial estimate, for the $50\%$ probability level. To this end, we define a `qsr` object where we set the quantile level as `level = 0.5` and where we provide the anistropic diffusion tensor using the `fe_elliptic(K = K)` penalty descriptor. The actual fitting is obtained by calling the `fit` method of the class `qsr`. The smoothing parameter $\lambda$ is selected according to the Generalized Cross-Validation criterion.
+The data exhibit strong anisotropic patterns across the domain. To account for the clear anisotropy observed in the data, we incorporate a stationary anisotropic diffusion term into the model. To do so, we define the differential operator as
+$$Lf(\mathbf{p}) = \text{div}(\mathbf{K}\nabla f(\mathbf{p})) \quad \forall \mathbf{p} \in \mathcal{D}\,.$$
+The anisotropy tensor $\mathbf{K}$ is estimated using the **parameter cascading algorithm** presented in @bernardi2018modeling, yielding an orientation angle of $140^\circ (2.45 \ \text{rad})$ and an intensity of anisotropy of $6.00\,.$
 
-```{r estimate, results="hide"}
-# physics modeling
-f <- fe_function(switzerland, type = "P1")
+```{r}
+## [DIFFUSION TENSOR]
 K <- matrix(
     c(1.229618413471819, 1.001009926596135, 1.001009926596135, 1.628164356689574),
     nrow = 2, ncol = 2, byrow = TRUE
 )
-# modeling
-m <- qsr(log.rainfall ~ f, data = gf, level = 0.5, penalty = fe_elliptic(K = K))
+```
 
-# fit
+#### 3.1 Physics-informed smoothing for the 50\% quantile level
+
+We can now compute the physics-informed quantile spatial estimate, for the $50\%$ probability level. To this end, we use the `qsr` function, setting the quantile level with the option `level = 0.5` and providing the anistropic diffusion tensor with `fe_elliptic(K = K)` as a penalty descriptor. The actual fitting is obtained by calling the `fit` method of the class `qsr`. The optimal smoothing parameter $\lambda$ is selected via Generalized Cross-Validation (GCV) minimization using grid search method.
+
+```{r estimate_50, results="hide"}
+## [PHYSICS-INFORMED QUANTILE REGRESSION]
+# Set up the finite element function (order 1)
+f <- fe_function(mesh, type = "P1")
+
+# Proposed value for the smoothing parameter
 lambda_grid = 10^seq(from = -7, to = -3, by = 0.2)
-fit = m$fit( calibrator = gcv( optimizer = grid_search(grid = lambda_grid ), seed=425) )
 
+# Physics informed smoothing model
+m <- qsr(log.rainfall ~ f, data = switzerland, level = 0.5, 
+         penalty = fe_elliptic(K = K)
+)
+
+# Physics informed smoothing fit with grid search for GCV minimization
+fit = m$fit(
+  calibrator = gcv(optimizer = grid_search(grid = lambda_grid),
+                   seed = 425)
+)
 ```
 
 Moreover, it is possible to inspect the behavior of the GCV indices as a function of the values proposed for the smoothing parameter $\lambda\,.$
 
-```{r grid_GCV, fig.width=8.3, fig.height=5}
+```{r grid_GCV_50, fig.width=8.3, fig.height=5}
 # GCV indices
-gcv = fit$values  
+gcv <- fit$values  
 
 # Optimal value selected for the smoothing parameter
-lambda_opt_grid = fit$optimum
+lambda_opt_grid <- fit$optimum
 lambda_opt_grid
 
 # Plot of the GCV curve
 par(family = "serif")
 plot(x = log10(lambda_grid), y = gcv, type = "b",
-     lwd = 2, xlab = expression(log[10](lambda)), ylab = "GCV score")
+     lwd = 2, xlab = TeX("$\\log_{10}(\\lambda)$"), ylab = "GCV")
 grid()
 abline(v = log10(lambda_opt_grid), lty = 2, lwd = 2, col = "royalblue")
-
-```
-<div style="text-align: center;">
-Figure 3: GCV curve of the $50\%$ quantile field.
-</div>
-
-The GCV curve is convex with minimum realized at the optimal value selected by the method, specifically $\lambda = 1e-5$ .
-
-We visualize the $50\%$ quantile estimate computed above in the logarithmic scale using `mapview`.
-
-```{r mapview_log50, fig.width=8.3, fig.height=5}
-# Interactive plot
-map_log50 <- mapview(f, crs = 4326, col.regions = mako,
-                na.color = "transparent", layer.name = "rainfall", exp_transform=TRUE) +
-         mapview(boundary_sf, col.regions = "transparent", alpha.regions = 0,
-                col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
-map_log50
-
+legend("bottomright", lty = 2, lwd = 2, col = "royalblue",
+       legend = TeX("$\\log_{10}(\\lambda_{grid})"))
 ```
 
 <div style="text-align: center;">
-Figure 4: Rainfall $50\%$ quantile estimate in the logarithmic scale provided by the anisotropic `QSR-PDE` with optimal lambda $\lambda = 1e-5$.
+Figure 4: GCV curve for the $50\%$ quantile field.
 </div>
 
-We now visualize the $50\%$ quantile estimate in the original scale, applying the 'exp' function to the 'f' object:
+The GCV curve is convex with minimum realized at the optimal value selected by the method -- specifically $1e-5\,.$.
+
+We visualize the $50\%$ quantile estimate computed above in the logarithmic scale using `mapview`. In addition, we visualize the $50\%$ quantile estimate in the original scale, applying the `fit` function to the `fe_function` object.
 
 ```{r mapview_50, fig.width=8.3, fig.height=5}
 # Interactive plot
-map50 <- mapview(exp(f), crs = 4326, col.regions = mako,
-                na.color = "transparent", layer.name = "rainfall", exp_transform=TRUE) +
+map_log50 <- mapview(f, crs = 4326, col.regions = mako,
+                     na.color = "transparent", layer.name = "log.rainfall") +
+         mapview(boundary_sf, col.regions = "transparent", alpha.regions = 0,
+                 col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+map_50 <- mapview(exp(f), crs = 4326, col.regions = mako,
+                 na.color = "transparent", layer.name = "rainfall") +
          mapview(boundary_sf, col.regions = "transparent", alpha.regions = 0,
                 col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
-map50
 
+sync(map_log50, map_50)
 ```
 
 <div style="text-align: center;">
-Figure 5: Rainfall $50\%$ quantile estimate in the original scale provided by the anisotropic `QSR-PDE` with optimal lambda $\lambda = 1e-5$.
+Figure 5: Rainfall $50\%$ quantile estimate in the logarithmic scale computed by the physics-informed `QSR-PDE` with optimal lambda $1e-05$ selected via GCV minimization using grid search method (left); rainfall $50\%$ quantile estimate in the original scale computed by the physics-informed `QSR-PDE` with optimal lambda $1e-05$ selected via GCV minimization using grid search method (right).
 </div>
 
+#### 3.2 Physics-informed smoothing for the 90\% quantile level
 
-We repeat the analysis for the quantile level $\alpha=90\%$ in order to compare the two fitted quantile fields.
+We repeat the analysis for the quantile level $\alpha = 90\%$ and we compare the two fitted quantile fields.
 
-```{r estimate90, results="hide"}
-# modeling
-m <- qsr(log.rainfall ~ f, data = gf, level = 0.9, penalty = fe_elliptic(K = K))
+```{r estimate_90, results="hide"}
+## [PHYSICS-INFORMED QUANTILE REGRESSION]
+# Set up the finite element function (order 1)
+f <- fe_function(mesh, type = "P1")
 
-# fit
+# Proposed value for the smoothing parameter
 lambda_grid = 10^seq(from = -7, to = -4, by = 0.2)
-fit = m$fit( calibrator = gcv( optimizer = grid_search(grid = lambda_grid ), seed=425) )
 
+# Physics informed smoothing model
+m <- qsr(log.rainfall ~ f, data = switzerland, level = 0.9, 
+         penalty = fe_elliptic(K = K)
+)
+
+# Physics informed smoothing fit with grid search for GCV minimization
+fit = m$fit(
+  calibrator = gcv(optimizer = grid_search(grid = lambda_grid),
+                   seed = 425)
+)
 ```
 
 We inspect the behavior of the GCV indices as a function of the values proposed for the smoothing parameter $\lambda\,.$
 
-```{r grid_GCV90, fig.width=8.3, fig.height=5}
+```{r grid_GCV_90, fig.width=8.3, fig.height=5}
 # GCV indices
-gcv = fit$values  
+gcv <- fit$values  
 
 # Optimal value selected for the smoothing parameter
-lambda_opt_grid = fit$optimum
+lambda_opt_grid <- fit$optimum
 lambda_opt_grid
 
 # Plot of the GCV curve
 par(family = "serif")
 plot(x = log10(lambda_grid), y = gcv, type = "b",
-     lwd = 2, xlab = expression(log[10](lambda)), ylab = "GCV")
+     lwd = 2, xlab = TeX("$\\log_{10}(\\lambda)$"), ylab = "GCV")
 grid()
 abline(v = log10(lambda_opt_grid), lty = 2, lwd = 2, col = "royalblue")
-
+legend("bottomright", lty = 2, lwd = 2, col = "royalblue",
+       legend = TeX("$\\log_{10}(\\lambda_{grid})"))
 ```
 
 <div style="text-align: center;">
-Figure 6: GCV curve of the $90\%$ quantile field.
+Figure 6: GCV curve for the $90\%$ quantile field.
 </div>
 
-We observe as, also in this case, the GCV curve is convex and with optimal value $\lambda=2.511886e-06$.
+Also in this case, the GCV curve is convex with minimum realized at the optimal value selected by the method, specifically $2.511886e-06\,.$.
 
-We can now visualize the $90\%$ quantile estimate computed above in the original scale.
+We visualize the $90\%$ quantile estimate computed above in both the logarithmic and original scales.
 
 ```{r mapview_90, fig.width=8.3, fig.height=5}
 # Interactive plot
-map90 <- mapview(f, crs = 4326, col.regions = mako,
-                na.color = "transparent", layer.name = "rainfall", exp_transform=TRUE) +
+map_log90 <- mapview(f, crs = 4326, col.regions = mako,
+                     na.color = "transparent", layer.name = "log.rainfall") +
+         mapview(boundary_sf, col.regions = "transparent", alpha.regions = 0,
+                 col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+map_90 <- mapview(exp(f), crs = 4326, col.regions = mako,
+                 na.color = "transparent", layer.name = "rainfall") +
          mapview(boundary_sf, col.regions = "transparent", alpha.regions = 0,
                 col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
 
-map90
-
+sync(map_log90, map_90)
 ```
 
 <div style="text-align: center;">
-Figure 7: Rainfall $90\%$ quantile estimate in the original scale provided by the anisotropic `QSR-PDE` with optimal lambda $\lambda = 2.511886e-06$.
+Figure 7: Rainfall $90\%$ quantile estimate in the logarithmic scale computed by the physics-informed `QSR-PDE` with optimal lambda $2.5e-06$ selected via GCV minimization using grid search method (left); rainfall $90\%$ quantile estimate in the original scale computed by the physics-informed `QSR-PDE` with optimal lambda $2.5e-06$ selected via GCV minimization using grid search method (right).
 </div>
 
-
-By comparing the two estimated quantile fields, we observe that the median surface appears much smoother than the $90\%$ quantile. This behavior is expected due to the median's robustness to skewness and local outliers. On the other hand, the $90\%$ quantile surface reveals several pronounced local spikes, highlighting regions prone to intense precipitation events. These peaks suggest that certain areas experience significantly higher rainfall extremes, underscoring the importance of analyzing the upper tail quantiles when assessing rainfall risk.
+Comparing the two estimated quantile fields, we observe that the median surface appears considerably smoother than the $90\%$ quantile. This is expected, as the median is more robustness to skewness and local outliers. On the other hand, the $90\%$ quantile surface exhibits several pronounced local spikes, highlighting regions prone to extreme precipitation. These peaks suggest that certain areas experience significantly higher rainfall extreme events, highlighting the importance of analyzing the upper-tail quantiles when assessing rainfall risk.
 
 ## References

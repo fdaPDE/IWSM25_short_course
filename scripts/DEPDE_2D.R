@@ -5,7 +5,9 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   message = FALSE,
-  warning = FALSE)
+  warning = FALSE,
+  root.dir = "$(pwd)/../"
+)
 
 
 ## ----fdaPDE, eval=TRUE--------------------------------------------------------
@@ -28,16 +30,6 @@ theme_set(theme_minimal() +
 )
 
 
-## ----data---------------------------------------------------------------------
-## [DATA]
-# Load the data
-data <- read.table(file = "../data/DEPDE_2D/DEPDE_2D_data.txt")
-head(data)
-
-# Select the first 2000 rows (first year)
-data <- data[1:2000,]
-
-
 ## ----spatial_domain-----------------------------------------------------------
 ## [SPATIAL DOMAIN]
 # Load the boundary nodes
@@ -49,7 +41,7 @@ boundary_segments <- read.table(file = "../data/DEPDE_2D/DEPDE_2D_boundary_segme
 head(boundary_segments)
 
 
-## ----mapview_boundary, fig.width=8.25, fig.height=5---------------------------
+## ----mapview_boundary, fig.width=8.3, fig.height=5----------------------------
 # Convert boundary into a sf object
 boundary_nodes_sf <- st_as_sf(x = rbind(boundary_nodes, boundary_nodes[1,]),
                               coords = c("lon", "lat"), crs = 4326)
@@ -95,7 +87,7 @@ head(mesh$nodes)
 mesh$n_nodes
 
 # Edges
-head(mesh$nodes)
+head(mesh$edges)
 
 # Number of edges
 mesh$n_edges
@@ -125,7 +117,7 @@ hampshire <- geoframe(domain = mesh)
 hampshire
 
 
-## ----data2--------------------------------------------------------------------
+## ----data---------------------------------------------------------------------
 ## [DATA]
 # Load the data
 data <- read.table(file = "../data/DEPDE_2D/DEPDE_2D_data.txt")
@@ -139,19 +131,19 @@ hampshire$insert(layer = "diseases", type = "point", geo = c("lon", "lat"), data
 hampshire
 
 
-## ----mapview_data, fig.width=8.25, fig.height=5-------------------------------
+## ----mapview_data, fig.width=8.3, fig.height=5--------------------------------
 # Interactive plot
-mapview(st_as_sf(data, coords = c("lon", "lat"), crs = 4326), 
-        color="red3", col.region ="red3", cex=2, legend = FALSE) + 
+mapview(hampshire[["diseases"]], varnames = "", crs = 4326, col.regions = "red3",
+        cex = 2.5, layer.name = "locations") +
  mapview(boundary_sf,
-        col.regions = "gray25", alpha.regions = 0.25, col = "black", lwd = 1.5,
-        legend = FALSE, layer = "domain") 
+         col.regions = "gray25", alpha.regions = 0.25, col = "black", lwd = 1.5,
+         legend = FALSE, layer = "domain") 
 
 
 ## ----density, results="hide"--------------------------------------------------
 ## [DENSITY ESTIMATION]
 # Proposed value for the smoothing parameter
-lambda_fixed <- 5e-5
+lambda_fixed <- 1e-2
 
 # Density estimation model
 model <- ppe(data = hampshire)
@@ -164,7 +156,12 @@ fit <- model$fit(
 
 
 ## ----density_output-----------------------------------------------------------
-#****
+# Density estimates at mesh nodes
+head(model$density)
+
+# Log-density estimates at mesh nodes
+head(model$log_density)
+
 # Finite element function
 f <- fe_function(domain =  mesh, type = "P1", coeff = model$log_density)
 
@@ -172,11 +169,8 @@ f <- fe_function(domain =  mesh, type = "P1", coeff = model$log_density)
 ## ----mapview_SST_iso_grid, fig.width=8.3, fig.height=5------------------------
 # Interactive plot
 mapview(f, crs = 4326, col.regions = inferno,
-        na.color = "transparent", layer.name = "log(estimate)") +
+        na.color = "transparent", layer.name = "ESTIMATE") +
   mapview(boundary_sf,
         col.regions = "gray25", alpha.regions = 0.25, col = "black", lwd = 2,
         legend = FALSE, layer.name = "domain")
-
-#  mapview(mesh, col.regions = "transparent", alpha.regions = 0,
-#          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
 
