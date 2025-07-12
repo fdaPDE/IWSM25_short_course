@@ -61,6 +61,7 @@ Your working directory should look as follows:
 📁 IWSM25_short_course
     📁 data
     📁 scripts
+    📁 utils
     📁 vignettes
 ```
 
