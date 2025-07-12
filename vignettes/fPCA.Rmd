@@ -1,0 +1,348 @@
+---
+title: "Functional Principal Component Analysis with Partial Differential Equation Regularization"
+author: "Marco Galliani @ fdaPDE Team, MOX, Department of Mathematics, Politecnico di Milano, Italy"
+date: ""
+output:
+  rmarkdown::html_vignette:
+    css: "utils/mystyle.css"  # Path to your custom CSS file
+    fig_caption: yes    # Enable figure caption
+bibliography: "utils/references.bib"  # Path to your .bib file with references
+csl: "utils/apa.csl"  # Path to your CSL file (choose your preferred style)
+vignette: >
+  %\VignetteIndexEntry{Functional Principal Component Analysis with Partial Differential Equation Regularization}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.align = "center",
+  collapse = TRUE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+## Functional Principal Component Analysis
+Functional Principal Component Analysis (fPCA) extends the traditional multivariate PCA to the case of functional data. The idea of fPCA is to describe the variability of functional data, namely smooth functions evaluated over a grid of points, as a linear combination of smooth basis functions called functional principal components (fPCs). This data summary provides insights into the dominant modes of variation and possibly allows for dimensionality reduction, considering only the principal components associated with a sufficient portion of variability. These properties make fPCA a valuable tool in functional data analysis (FDA).
+
+The fPCA model derived within the the `fdaPDE` framework in [@lila2016smooth] minimizes the following functional:
+
+$$
+J(\{f_m\}, S) = \sum_{i=1}^n \sum_{j=1}^l \left (x_{ij}-\sum_{m=1}^r s_{mi}f_m(\mathbf{p}_j) \right )^2 +  \sum_{m=1}^r \lambda_m \|\mathbf{s}_m\|_2^2 \int_{\mathcal{D}} (\Delta f_m)^2 
+$$
+
+The first term encodes the data-fidelity of the estimates using the characterisation of fPCA as the best $r$-basis approximation of the data, while the terms in the sum promote the smoothness of the estimated fPCs to account for the functional nature of the data. The trade-off between data-fidelity and smoothness of the fPCs is balanced by the $\{\lambda_m\}_m$ parameters, which can be selected using data-driven criteria, such as GCV.
+
+## Application study on Spatial Transcriptomics
+As a benchmark application, we analyze HER2-positive breast tumor data. This data consist of measurments of gene expression levels over a breast cancer tissue section. Gene expression levels are measured by counting how many times the gene is transcripted at a specific location using spatial transcriptomics techniques. In this analysis we're gonna consider gene expression levels for a single patient.
+
+```{r, echo=FALSE, out.width = '70%'}
+knitr::include_graphics("data/fpca/HER2/hist_image.png")
+```
+Histological image of the tissue labelled by a pathologist [@shang2022spatially].
+
+Some terminology:
+- DCIS(Ductal Carcinoma In Situ): initial form of cancer, the cancer does not expand but remains in-situ
+- Immune cells: a cell that is part of the immune system and helps the body fight infections and other diseases. 
+
+```{r libraries, include=FALSE}
+# Import the fdaPDE library
+library(fdaPDE2)           # v. 2.0 (2025)
+rm(list = ls())
+
+# Load additional libraries and helper functions for plotting
+source("utils/graphics.R")
+```
+
+```{r warning=FALSE, include=FALSE}
+# Common plot settings
+standard_plot_settings_fields <- function() {
+  standard_plot_settings_fiends <- theme_minimal() +
+    theme(
+      text = element_text(size = 12),
+      plot.title = element_text(
+        color = "black",
+        face = "bold",
+        size = 14,
+        hjust = 0.5,
+        vjust = 1
+      ),
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      axis.text.x = element_blank(),
+      axis.text.y = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.ticks.y = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      legend.position = "bottom",
+      legend.title = element_blank(),
+      legend.text = element_text(angle = 45, hjust = 1)
+    )
+}
+```
+
+In particular, the data preprocessed following the procedure highlighted in [@shang2022spatialPCA], consists of $302$ genes measured at $604$ locations over the tissue, represented as a bidimensional domain.
+
+```{r data, fig.width=8, fig.height=5}
+## [DATA]
+path_data <- "data/fpca/HER2/"
+counts <- as.matrix(read.csv(paste(path_data,"counts.csv",sep=""),
+                             row.names=1))
+locations <- read.csv(file=paste(path_data,"locs.csv",sep=""), 
+                      row.names=1)
+# data content
+# - locations:      (data.frame)    n_locations x 2
+# - counts:         (dgCMatrix)     n_genes x n_locations
+gene_names <- names(counts[,1])
+```
+
+
+Let's visualise the expression of the ERBB2 gene, which encodes the HER2 protein. From prior knowledge we know that the over-expression of this gene is an important biomarker for breast cancer. Moreover, the breast tumor we're considering here is known to be HER2-positive. So that we can see that its expression is stronger in regions labelled as cancerous by the pathologist since the gene it's playing a key role in the spreading of the tumor.
+
+```{r ERB22-gene}
+idx.HER2 <- 22
+
+plot_HER2 <- ggplot() +
+    geom_tile(aes(x = locations[,1], y = locations[,2], 
+                  fill = counts[idx.HER2,])) + 
+    scale_fill_viridis_c(option = "magma") +
+    coord_fixed() +
+    standard_plot_settings_fields() +
+    ggtitle(gene_names[idx.HER2])
+```
+
+::::: {style="display: flex;"}
+::: {style="flex: 2;"}
+```{r,  echo=FALSE}
+knitr::include_graphics("data/fpca/HER2/reduced_hist_img.png")
+```
+:::
+
+::: {style="flex: 2;"}
+```{r, echo=FALSE}
+plot_HER2
+```
+:::
+:::::
+
+Now let's dive into the fPCA-based analysis. Firstly, we need to generate a mesh for our domain starting from the sampling locations, using the `create.mesh.2D` and `refine.mesh.2D` functions.
+```{r mesh, results='hide'}
+## [MESH]
+p <- pslg(
+  P = locations
+)
+mesh_data <- triangulate(p, Y = FALSE, D = TRUE)
+if (is.null(mesh_data$H)) mesh_data$H <- matrix(numeric(0), ncol = 2)
+mesh_data <- triangulate(mesh_data, a = 0.1, q = 30, D = TRUE) ## ruppert's refinement
+tissue <- triangulation(
+  nodes    = mesh_data$P,
+  cells    = mesh_data$T,
+  boundary = mesh_data$PB
+)
+```
+::::: {style="display: flex; gap: 1em;"}
+::: {style="flex: 4;"}
+```{r mesh_plot, echo=FALSE, fig.width=6, fig.height=6}
+plot(tissue)
+```
+:::
+:::::
+
+Now the goal is to visualize the fPCs to inspect the most important modes of variation in the data. A nice thing about the fPCA model is that it allows to evaluate the fPCs at an arbitrary set of locations so that we can visualize the fPCs on a finer grid to have a higher resolution visualization.
+```{r}
+## 1) Generate a rectangular grid
+grid_step <- 1/6
+seed_point <- SpatialPoints(data.frame(x = 11, y = -11))
+
+bbox <- SpatialPoints(locations)@bbox
+
+xmin <- bbox[1,1]
+xmax <- bbox[1,2]
+ymin <- bbox[2,1]
+ymax <- bbox[2,2]
+
+x <- seq(xmin, xmax, by = grid_step)
+y <- seq(ymin, ymax, by = grid_step)
+grid <- expand.grid(x = x, y = y)
+
+
+## 2) Adapt the rectangular grid to the convex hull of the locations
+locations_sf <- st_as_sf(as.data.frame(locations), coords = c("x", "y"), crs = 4326)
+grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = 4326)
+
+# Compute convex hull
+convex_hull <- st_convex_hull(st_union(st_as_sf(as.data.frame(locations), 
+                                                coords = c("x", "y"), crs = 4326)))
+# Keep only grid points within the convex hull
+grid <- as.data.frame(st_coordinates(grid_sf[st_within(grid_sf, convex_hull, 
+                                                               sparse = FALSE), ]))
+```
+
+Let's fit the model on the centred data (fPCA has the fundamental assumption of working with zero-mean data).
+```{r}
+# Firstly, construct a geoframe containing the sample means at locations
+gf_mean <- geoframe(domain = tissue)
+gf_mean$insert(layer = "sample_mean", 
+          type = "point", 
+          geo = locations, 
+          data = data.frame(sample_mean=colMeans(counts)))
+
+# Now let's smooth the colwise mean to obtain a smooth mean
+f <- fe_function(tissue, type = "P1")
+smooth_mean_m <- sr(formula = sample_mean ~ f, data = gf_mean)
+
+sm_fit_log <- smooth_mean_m$fit(
+  calibrator = gcv(
+    optimizer = grid_search(grid = 10^seq(from=-5,to=-2,length.out=10)),
+    edf = "hutch"
+  )
+)
+# center the data
+centred_counts <- sweep(counts, 2,
+                        smooth_mean_m$fitted, 
+                        FUN = "-")
+```
+
+
+Visualize the mean on a fine grid
+```{r mean_visual,fig.width=6, fig.height=5}
+mean_function <- fe_function(domain = tissue, 
+                 type = "P1", 
+                 coeff = smooth_mean_m$f)
+                     
+ggplot() + 
+      geom_tile(aes(x = grid[,1], y = grid[,2], fill = mean_function$eval(grid))) + 
+      scale_fill_viridis_c(option = "magma") +
+      coord_fixed() +
+      standard_plot_settings_fields() +
+      ggtitle("Smooth mean")
+```
+
+We're now ready to fit the fPCA model on the centred data
+```{r}
+## construct a new geoframe
+gf_fpca <- geoframe(domain = tissue)
+gf_fpca$insert("gene_expression", type = "point", geo = locations)
+gf_fpca[["gene_expression"]]$X <- t(centred_counts)
+
+## modeling
+fpca_m <- fpca("X", data = gf_fpca)
+fpca_m$fit(
+  npc = 6,
+  calibrator = gcv(
+    optimizer = grid_search(grid = 10^seq(from = -2, to = 2, by = 0.5))
+  )
+)
+```
+
+
+Visualize the explained variance to select the optimal number of PCs. A jump in the variance explained appears between 3 and 4. So that we may keep the first 3 fPCs.
+```{r variance-explained, fig.width=6, fig.height=5}
+plot(apply(fpca_m$scores,2,var),type="b",
+      xlab = "fPC index", ylab = "Variance explained")
+```
+
+Finally we can visualize the extracted fPCs in high-resolution!
+```{r}
+plot_fPCs <- list()
+
+fPCs.grid <- apply(fpca_m$pcs, 2, 
+                   function(loadings){
+                     f <- fe_function(domain = tissue, type = "P1", coeff = loadings)
+                     f$eval(grid)
+                   })
+
+for (i in 1:3) {
+  #flip fPCs to have coherent signs in the visualization
+  if (max(fPCs.grid[, i],na.rm=T) < -min(fPCs.grid[, i],na.rm=T)) {
+    fPCs.grid[, i] <- -fPCs.grid[, i]
+  }
+}
+
+# plot using the same scale
+global_min <- min(fPCs.grid[, 1:3],na.rm=T)
+global_max <- max(fPCs.grid[, 1:3],na.rm=T)
+
+plot_fPCs <- lapply(
+  1:3, function(fPC_idx)
+    ggplot() + 
+      geom_tile(aes(x = grid[,1], y = grid[,2], fill = fPCs.grid[,fPC_idx])) + 
+      scale_fill_viridis_c(option = "magma", limits = c(global_min, global_max)) +
+      coord_fixed() +
+      standard_plot_settings_fields() +
+      ggtitle(paste("fPC",fPC_idx,sep=""))
+  )
+```
+
+
+```{r, echo=FALSE, out.width = '40%'}
+knitr::include_graphics("data/fpca/HER2/reduced_hist_img.png")
+```
+
+```{r, include=FALSE}
+library(patchwork)
+```
+
+```{r, fig.width=8, fig.height=3}
+#plot the fPCs with a shared legend using the patchwork package
+(plot_fPCs[[1]] + plot_fPCs[[2]] + plot_fPCs[[3]]) +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom")
+```
+
+Interpretation of the first 3 functional principal components (fPCs) relative to the histological image:
+
+- fPC1: Shows activation in cancerous regions
+- fPC2: Shows activation in immune cell regions
+- fPC3: Shows activation in normal glandular tissue
+
+We can even use the fPCA model to obtain smooth reconstructions of the original genes activation maps. Let's consider once again the ERBB2 gene and reconstruct its activation map using the extracted fPCs.
+```{r}
+erb22_reconstruction <- 
+  sweep(fpca_m$scores[,1:3] %*% t(fPCs.grid[,1:3]), 2, 
+        mean_function$eval(grid), FUN = "+")[idx.HER2,]
+  
+plot_HER2_reconstruction <- ggplot() +
+    geom_tile(aes(x = grid[,1], y = grid[,2], 
+                  fill = erb22_reconstruction)) +
+    scale_fill_viridis_c(option = "magma") + 
+    coord_fixed() +
+    standard_plot_settings_fields() +
+    ggtitle("ERBB2 reconstruction")
+```
+
+::::: {style="display: flex; gap: 1em;"}
+::: {style="flex: 4;"}
+```{r HER2_rec_plot, echo=FALSE, fig.width=6, fig.height=5}
+plot_HER2_reconstruction
+```
+:::
+:::::
+
+Moreover if we look at the score vector related to ERB22 gene, we see that fPC1 is strongly activated, coherently to fPC1 interpretation. 
+```{r, fig.width=6, fig.height=5}
+fpca_m$scores[idx.HER2,]
+
+labels <- paste0("fPC", 1:3)
+barplot(fpca_m$scores[idx.HER2,1:3],
+        names.arg = labels, main = "ERB22 scores",
+        ylim=c(-10,20))
+abline(h=0)
+```
+
+Moreover, ERB22 is the gene having the maximum score with respect to fPC1
+```{r, fig.width=6, fig.height=5}
+gene_names[which.max(fpca_m$scores[,1])]
+
+#boxplot of scores1
+boxplot(fpca_m$scores[,1], horizontal = T,
+        main = "Score1")
+points(max(fpca_m$scores[,1]), 1, col = "red", pch = 19, cex = 1.5)
+text(max(fpca_m$scores[,1]), 1.1, labels = "ERB22", col = "red", pos = 2)
+```
+
+## References

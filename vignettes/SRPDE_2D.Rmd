@@ -1,0 +1,726 @@
+---
+title: "Spatial Regression with Partial Differential Equation Regularization"
+author: "Simone Panzeri @ fdaPDE Team, MOX, Department of Mathematics, Politecnico di Milano, Italy"
+date: ""
+output:
+  rmarkdown::html_vignette:
+    css: "utils/mystyle.css"  # Path to custom CSS file
+    fig_caption: yes    # Enable figure caption
+bibliography: "utils/references.bib"  # Path to .bib file with references
+csl: "utils/apa.csl"  # Path to CSL file
+vignette: >
+  %\VignetteIndexEntry{Spatial Regression with Partial Differential Equation Regularization}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+  
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.align = "center",
+  collapse = TRUE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+The `fdaPDE` C++/R library [@arnone2025fdapde] provides advanced statistical methods for *physics-informed spatial and functional data analysis*, featuring regularization terms based on partial differential equations; for a review of this class of methods, refer to @sangalli2021spatial. The library can handle different types of data that may evolve over time on non-standard spatial domains, including linear networks, irregular planar regions, curved surfaces, and volumes. Among the broad range of modeling capabilities offered by `fdaPDE`, we focus here on the **spatial regression method**.
+
+## Spatial regression method
+
+Let $\mathcal{D} \subset \mathbb{R}^d\,,$ with $d \geq 1\,,$ be a bounded spatial domain of interest in which $n$ fixed measurement stations are located. Here, we consider $d = 2\,,$ but the proposed method can handle multidimensional spatial domains with complex shapes, including two-dimensional curved surfaces [@ettinger2016spatial] and non-convex three-dimensional volumes [@arnone2023analyzing]. At the location $\mathbf{p}_i =(p_{1i}, p_{2i})^\top \in \mathcal{D}$ of each station, we observe a realization $y_i \in \mathbb{R}$ of the response variable $Y_i$ under study, along with a set of covariates $\mathbf{x}_i = \left( x_{i,1},\ldots,x_{i,q} \right)^\top \in \mathbb{R}^q\,,$ if available. We present a semiparametric spatial regression model with partial differential equation regularization, which we formulate as follows:
+$$y_i = \mathbf{x}_i^\top \boldsymbol{\beta} + f(\mathbf{p}_i) + \varepsilon_i\,, \qquad i = 1, \ldots, n\,,$$
+where:
+  
+- $\boldsymbol{\beta} \in \mathbb{R}^q$ is the vector of *unknown regression coefficients* capturing the mean effects of the covariates;
+
+- $f(\mathbf{p}_i) \in \mathbb{R}$ is the *unknown deterministic spatial field* $f : \mathcal{D} \to \mathbb{R}$ at the $i$th data location;
+
+- $\varepsilon_i \in \mathbb{R}$ is the *measurement error*; in particular, $\boldsymbol{\varepsilon} = \left( \varepsilon_1, \ldots, \varepsilon_n \right)^\top \in \mathbb{R}^n$ are assumed to be independent and identically distributed, having zero mean and finite variance $\sigma^2\,.$
+  
+To estimate the unknown parameters, we refer to the basic form of the regularized methods, as reviewed in @sangalli2021spatial and originally introduced in @sangalli2013spatial. These works propose to minimize the following penalized functional based on the sum of squared errors:
+$$\frac{1}{n} \sum_{i = 1}^n \left( y_i - \mathbf{x}_i^\top \boldsymbol{\beta} - f(\mathbf{p}_i) \right)^2 + R(f; \lambda)\,,$$
+where $R(f; \lambda)$ is the *regularization term* that depends on the *smoothing parameter* $\lambda \in \mathbb{R}^+\,.$ The regularization term is defined using Partial Differential Equations (PDEs), with differential operators encoding the smoothness of $f$ over $\mathcal{D}\,.$ This term may also incorporate problem-specific information into the modeling framework, whenever available. The functional above embodies the trade-off between *data fidelity* and *model fidelity* through the least-squares term and the misfit with respect to the PDE, respectively. The balance between these two contributions is governed by the smoothing parameter.
+
+The regularization term is given by:
+$$R(f; \lambda) = \lambda \int_\mathcal{D} \left( L f - u \right)^2 \, \text{d}\mathbf{p}\,,$$
+where $Lf = u$ is the PDE modeling the spatial variation of the unknown spatial field $f\,.$ The PDE encodes problem-specific information derived from the physics of the phenomenon under study and formalizes it in terms of $f\,.$ In the most general case, the method currently supports second-order linear elliptic PDEs, with diffusion-transport-reaction operators of the following form:
+$$Lf = -\nabla \cdot (K \nabla f) + \mathbf{b} \cdot \nabla f + cf\,,$$
+where:
+  
+- the symmetric and positive definite matrix $K \in \mathbb{R}^{2\times2}$ is the *diffusion tensor*, which models anisotropy;
+
+- $\mathbf{b} \in \mathbb{R}^2$ is the *transport vector*, which generates one-directional smoothing;
+
+- $c \in \mathbb{R}^+$ is the *reaction coefficient*, which is responsible for shrinking the field $f$ to zero.
+
+Each of these parameters, along with the *forcing term* $u \in L^2(\mathcal{D})\,,$ can vary over space and contribute to modeling different forms of anisotropy and non-stationarity. Consistent with the application presented in this vignette, we will focus on homogeneous forcing terms $u \equiv 0\,.$ For non-homogeneous forcing terms, refer to @azzimonti2014mixed, azzimonti2015blood and @arnone2019modeling. If prior knowledge about the phenomenon under study is not available, the regularization term leads to stationary and isotropic smoothing through the Laplace operator $\Delta\,,$ corresponding to $K = I\,,$ $\mathbf{b} = \mathbf{0}\,,$ and $c = 0\,.$ Moreover, problem-specific conditions on $f$ may be imposed at the boundary $\partial\mathcal{D}$ of the spatial domain. The method currently supports Dirichlet, Neumann, and Robin boundary conditions, which respectively set the value of $f$ at $\partial\mathcal{D}\,,$ its normal derivative at $\partial\mathcal{D}\,,$ or a combination of both. In addition, boundary conditions may vary over $\partial\mathcal{D}\,.$
+  
+The method for Spatial Regression with Partial Differential Equation regularization presented in this vignette, hereafter referred to as `SR-PDE`, is implemented within the `fdaPDE2` C++/R library [@arnone2025fdapde]. We load the library in the working environment as follows:
+  
+```{r fdaPDE, eval=TRUE}
+# Import the fdaPDE library
+library(fdaPDE2)           # v. 2.0 (2025)
+rm(list = ls())
+
+# Load additional libraries and helper functions for plotting
+source("utils/graphics.R")
+```
+
+```{r theme, echo=FALSE}
+theme_set(theme_minimal() +
+            theme(
+              axis.title = element_text(),
+              axis.text = element_text(),
+              axis.ticks = element_line(),
+              panel.grid = element_line()
+            )
+)
+```
+
+## Application to oceanographic quantities around the Florida peninsula
+
+As a benchmark application in environmental sciences, we consider oceanographic data in the Gulf of Mexico, around the Florida peninsula. @tomasetto2024modeling presents this application in the context of spatial regression with differential regularization, proposing a parameter cascading approach for the estimation of PDE parameters, building on a first investigation by @bernardi2018modeling. The dataset contains some indicators of water quality measured at 30 moored buoys, serving as monitoring stations, on April 1, 2020. In particular, we consider the *Sea Surface Temperature* (SST) and *Dissolved Oxygen* (DO) at standard depth levels. The dataset is freely and publicly available by different data sources, including the [National Data Buoy Center](https://www.ndbc.noaa.gov/) and the [National Centers for Environmental Information](https://www.ncei.noaa.gov/archive/accession/NCEI-WOA18) of the National Oceanic and Atmospheric Administration. SST is vital for marine ecosystems, weather prediction, and climate monitoring, influencing biological activity, atmospheric circulation, and heat absorption from climate change. On the other hand, DO is a key indicator of aquatic ecosystem health, essential for marine life and water quality. Monitoring its spatial distribution helps detect and address environmental issues early.
+
+### Spatial domain
+
+First, we load the geometry of the **spatial domain** under study, created by preprocessing the Florida administrative boundary. This stage includes defining the specific region of interest located in the Gulf of Mexico, removing minor islands, and reducing the resolution of the coastlines. We imported the Florida administrative boundary using the `tigris` [@walker2025tigris] R package, and performed subsequent preprocessing steps relying on the `sf` [@pebesma2025sf] and `rmapshaper` [@teucher2025rmapshaper] R packages.
+
+The preprocessed geometry of the spatial domain is available from the file `data/SRPDE_2D/SRPDE_2D_domain.shx` and can be loaded through `sf` as follows.
+
+```{r spatial_domain}
+## [SPATIAL DOMAIN]
+domain <- st_read(dsn = "data/SRPDE_2D/domain/SRPDE_2D_domain.shx")
+domain
+```
+
+The spatial domain can be interactively visualized using the `mapview` [@appelhans2025mapview] R package.
+
+```{r mapview_spatial_domain, fig.width=8.3, fig.height=5}
+# Interactive plot
+mapview(domain,
+        col.regions = "gray25", alpha.regions = 0.25, col = "black", lwd = 1.5,
+        legend = FALSE, layer.name = "domain")
+```
+
+<div style="text-align: center;">
+Figure 1: Spatial domain of interest -- a portion of the Gulf of Mexico around the Florida peninsula.
+</div>
+  
+Now we build a **regular mesh** of the spatial domain under consideration. We create a mesh based on boundary nodes and segments, and then we refine it by setting the maximum element area to 0.01 and the minimum angle to 20 degrees. To obtain the boundary nodes, we rely on the `sf` functionality, while the triangulation is constructed using the `RTriangle` [@shewchuk2025RTriangle] R package. Other software can be used to get the triangulation; for example, it can be constructed through the `fmesher` [@lindgren2025fmesher] R package.
+
+```{r mesh_regular}
+## [MESH]
+# Define boundary nodes
+boundary_nodes <- st_cast(x = domain, "POINT", crs = 4326)
+boundary_nodes <- st_coordinates(x = boundary_nodes)
+boundary_nodes <- data.frame(lon = boundary_nodes[,1], lat = boundary_nodes[,2])
+
+# Remove the last node (duplicate node)
+boundary_nodes <- boundary_nodes[-nrow(boundary_nodes),]
+head(boundary_nodes)
+
+# Define boundary segments
+boundary_segments <- cbind(1:nrow(boundary_nodes), c(2:nrow(boundary_nodes), 1))
+head(boundary_segments)
+
+# Create a planar straight line graph object
+boundary_pslg <- pslg(P = boundary_nodes, S = boundary_segments)
+
+# Create a regular mesh of the spatial domain
+mesh_regular <- triangulate(p = boundary_pslg)
+if (is.null(mesh_regular$H)) mesh_regular$H <- matrix(data = numeric(0), ncol = 2)
+
+# Refine the mesh of the spatial domain
+mesh_regular <- triangulate(p = mesh_regular, a = 0.01, q = 20, D = TRUE)
+if (is.null(mesh_regular$H)) mesh_regular$H <- matrix(data = numeric(0), ncol = 2)
+
+# Number of nodes
+nrow(mesh_regular$P)
+
+# Number of triangles
+nrow(mesh_regular$T)
+```
+
+We convert the `triangulation` object from `RTriangle` so that it can be read by `fdaPDE`.
+
+```{r triangulation}
+# Set up the triangulation for fdaPDE
+mesh <- triangulation(nodes = mesh_regular$P, cells = mesh_regular$T,
+                      boundary = mesh_regular$PB)
+
+# Nodes coordinates
+head(mesh$nodes)
+
+# Number of nodes
+mesh$n_nodes
+
+# Edges
+head(mesh$nodes)
+
+# Number of edges
+mesh$n_edges
+
+# Triangles
+head(mesh$cells)
+
+# Number of triangles
+mesh$n_cells
+
+# Bounding box
+mesh$bbox
+```
+
+We visualize the resulting mesh of the spatial domain of interest.
+
+```{r mapview_regular_mesh, fig.width=8.3, fig.height=5}
+# Interactive plot
+mapview(domain,
+        col.regions = "gray25", alpha.regions = 0.25, col = "black", lwd = 1.5,
+        legend = FALSE, layer = "domain") +
+  mapview(mesh, crs = 4326,
+          col.regions = "transparent", lwd = 1.25, legend = FALSE, layer = "mesh")
+```
+
+<div style="text-align: center;">
+Figure 2: Regular mesh of the spatial domain of interest around the Florida peninsula with $2\,851$ nodes and $5\,342$ triangles.
+</div>
+
+We use the triangulation just created to define the spatial support of a `geoframe` object. This object will host layers containing data observed over the spatial support.
+
+```{r geoframe}
+# Create the geoframe
+florida <- geoframe(domain = mesh)
+florida
+```
+
+### Data
+
+We import the preprocessed data from the file `data/SRPDE_2D/SRPDE_2D_data.txt` as a `data.frame` object. For the purpose of visualization, we convert this object into a `sf` object. Moreover, we add a data layer to the `geoframe` object defined above, thus obtaining a format compatible with the implementation of the proposed regression method.
+
+```{r data}
+## [DATA]
+# Load the data
+data <- read.table(file = "data/SRPDE_2D/SRPDE_2D_data.txt")
+head(data)
+
+# Convert data into a sf object
+data_sf <- st_as_sf(x = data, coords = c("lon", "lat"), crs = 4326)
+
+# Add layer with data to the geoframe object
+florida$insert(layer = "ocean", type = "point",
+          geo = c("lon", "lat"), data = data)
+florida
+```
+
+The recorded values are shown in the interactive plot below, created using the `mapview` [@appelhans2025mapview] R package.
+
+```{r mapview_data, fig.width=8.25, fig.height=5}
+# Interactive plot
+mapview(florida[["ocean"]], crs = 4326,
+        color_palettes = list("inferno", "viridis", "viridis", "viridis",
+                              "viridis", "viridis"))
+```
+
+<div style="text-align: center;">
+Figure 3: Sea Surface Temperature (SST), Dissolved Oxygen (DO), and concentrations of Nitrate, Phosphate, Salinity, and Silicate, observed at 30 monitoring stations located in the Gulf of Mexico, around the Florida peninsula, on April 1, 2020.
+</div>
+
+First, we focus on the SST. The *non-standard shape* of the spatial domain strongly influences the oceanographic quantity under study. For example, temperatures recorded at two buoys located on opposite sides of the Florida peninsula are naturally less correlated than those recorded at two buoys situated the same distance apart but on the same side of the peninsula. `SR-PDE` naturally accounts for the geometry of the domain, which features irregular boundaries and concavities.
+
+#### SST satellite images
+
+In addition to the data introduced above, the file `data/SRPDE_2D/raster/SST.RData` contains a `raster` [@hijmans2025raster] object with the SST values observed from high resolution satellite images provided by the Jet Propulsion Laboratory of the [National Aeronautics and Space Administration (NASA)](https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1).
+
+```{r SST}
+# Load the SST data from NASA satellite images as a raster object
+load("data/SRPDE_2D/raster/SST.RData")
+SST
+```
+
+The SST data from NASA satellite images appear as follows:
+
+```{r mapview_SST_raster, fig.width=8.3, fig.height=5}
+# Interactive plot
+mapview(SST - 273.15, col.regions = inferno, na.color = "transparent",
+        layer.name = "SST [°C]") +
+  mapview(domain, col.regions = "transparent", alpha.regions = 0,
+          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+```
+
+<div style="text-align: center;">
+Figure 4: SST data from NASA satellite images, used solely for comparison with the SST estimates computed by the proposed `SR-PDE` method in the next section.
+</div>
+
+We point out that these data are not used for the purpose of estimation; they are displayed here only to enable comparison with respect to the SST estimate provided by the proposed `SR-PDE` method in the next section. Instead, the estimation is performed using the 30 observations measured at the moored buoys, contained in the `data` variable loaded above.
+
+### `SR-PDE` model fitting for isotropic smoothing (without covariates)
+
+Now we are ready to perform the `SR-PDE` spatial regression method using the `sr` function. This function offers several options for solving the regression problem, including the possibility to specify covariates, PDE parameters, and boundary conditions, whenever available. The function supports several distributions within the exponential family for generalized linear models and can handle areal data. In addition, the function implements different algorithms for degrees of freedom computation and criteria for optimal smoothing parameter selection. For further information, see the documentation in the Help by typing `?sr`.
+
+Here, in its simplest form, we apply isotropic smoothing to the SST data, hereafter referred to as `SR-PDE`$(I,\mathbf{0},0)\,.$ This means that we consider:
+
+- a **stationary and isotropic diffusion tensor**: $K = I\,,$ where $I$ is the identity matrix;
+
+- a **null transport vector**: $\mathbf{b}(\mathbf{p}) = \mathbf{0}\,;$
+
+- a **null reaction coefficient**: $c = 0\,;$
+
+- a **null forcing term**: $u \equiv 0\,.$
+
+#### Isotropic smoothing with fixed smoothing parameter
+
+We can fit the model with a fixed proposed value for the smoothing parameter $\lambda\,.$ For instance, we can set it to $0.00001\,,$ and compute the estimate as follows:
+
+```{r SST_iso_fixed, results="hide"}
+# Set up the finite element function
+f_SST_iso_fixed <- fe_function(mesh, type = "P1")
+
+# Proposed value for the smoothing parameter
+lambda_fixed <- 0.00001
+
+# Isotropic smoothing model
+model_SST_iso_fixed <- sr(formula = SST ~ f_SST_iso_fixed, data = florida)
+
+# Isotropic smoothing fit with fixed lambda
+fit_SST_iso_fixed <- model_SST_iso_fixed$fit(lambda = lambda_fixed)
+```
+
+We print the regression model outputs.
+
+```{r SST_iso_fixed_output}
+# Fitted values at mesh nodes
+head(f_SST_iso_fixed$coeff)
+
+# Fitted values at locations
+head(model_SST_iso_fixed$fitted)
+
+# Residuals at locations: response - fitted values
+SST_iso_fixed_residuals <- c(florida[["ocean"]]$SST - model_SST_iso_fixed$fitted)
+summary(SST_iso_fixed_residuals)
+```
+To evaluate the regression model fit over a fine grid and enable interactive visualization of the estimate, we internally create a new `raster` object. We then compute the fitted values over the grid using the `$eval` method. We plot the resulting estimate with `mapview`: this is just one possibility; various other plotting options are available depending on the specific purpose.
+
+The regression model fit over the region of interest is instead displayed below (left). For qualitative comparison, the SST data from NASA satellite images is also displayed (right).
+
+```{r mapview_SST_iso_fixed, fig.width=8.3, fig.height=5}
+# Interactive plot
+map1 <- mapview(f_SST_iso_fixed, crs = 4326, col.regions = inferno,
+                na.color = "transparent", layer.name = "SST [°C]") +
+  mapview(domain, col.regions = "transparent", alpha.regions = 0,
+          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+map2 <- mapview(SST - 273.15, col.regions = inferno, na.color = "transparent",
+                layer.name = "SST [°C]") +
+  mapview(domain, col.regions = "transparent", alpha.regions = 0,
+          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+sync(map1, map2)
+```
+
+<div style="text-align: center;">
+Figure 5: SST estimate provided by the isotropic `SR-PDE`$(I,\mathbf{0},0)$ (without covariates) with $\lambda = 0.001$ (left) and SST data from NASA satellite images (right). We recall that the latter are not used for estimation purposes; they are displayed here solely to allow comparison with the SST estimate computed by the proposed `SR-PDE` method based on the 30 observations measured at the moored buoys.
+</div>
+
+The smoothing fit is not accurate compared to the satellite image data in most regions, resulting in overly smoothed behavior. This is likely due to the value selected of the smoothing parameter $\lambda\,,$ which is clearly not optimal here.
+
+#### Isotropic smoothing with optimization of the smoothing parameter via Generalized Cross-Validation (GCV) minimization using grid search
+
+Without any prior knowledge about the optimal value of the smoothing parameter $\lambda\,,$ it can be selected by minimizing the Generalized Cross-Validation (GCV) index on a finite grid of proposed values. This method needs the evaluation of degrees of freedom. To this aim, we perform a stochastic computation of the degrees of freedom.
+
+```{r SST_iso_grid, results="hide"}
+# Proposed values for the smoothing parameter
+lambda_grid <- 10^seq(from = -6, to = -2, by = 0.2)
+
+# Set up the finite element function
+f_SST_iso_grid <- fe_function(mesh, type = "P1")
+
+# Isotropic smoothing model
+model_SST_iso_grid <- sr(formula = SST ~ f_SST_iso_grid, data = florida)
+
+# Isotropic smoothing fit with grid search for GCV minimization
+fit_SST_iso_grid <- model_SST_iso_grid$fit(
+  calibrator = gcv(optimizer = grid_search(grid = lambda_grid))
+)
+```
+
+We print the regression model outputs.
+
+```{r SST_iso_grid_output}
+# Fitted values at mesh nodes
+head(f_SST_iso_grid$coeff)
+
+# Fitted values at locations
+head(model_SST_iso_grid$fitted)
+
+# Residuals at locations: response - fitted values
+SST_iso_grid_residuals <- c(florida[["ocean"]]$SST - model_SST_iso_grid$fitted)
+summary(SST_iso_grid_residuals)
+```
+
+Moreover, it is possible to inspect the behavior of the GCV indices as a function of the values proposed for the smoothing parameter $\lambda\,.$
+
+```{r SST_iso_grid_GCV, fig.width=8.3, fig.height=5}
+# Optimal value selected for the smoothing parameter
+lambda_opt_grid <- fit_SST_iso_grid$optimum
+lambda_opt_grid
+
+# Plot of the GCV curve
+par(family = "serif")
+plot(x = log10(lambda_grid), y = fit_SST_iso_grid$values, type = "b",
+     lwd = 2, xlab = TeX("$\\log_{10}(\\lambda)$"), ylab = "GCV")
+grid()
+abline(v = log10(lambda_fixed), lty = 2, lwd = 2, col = "lightblue3")
+abline(v = log10(lambda_opt_grid), lty = 2, lwd = 2, col = "royalblue")
+legend("topleft", lty = c(2, 2), lwd = c(2, 2), col = c("lightblue3", "royalblue"),
+       legend = c(TeX("$\\log(\\lambda_{fixed})"),
+                  TeX("$\\log(\\lambda_{grid})")))
+```
+
+<div style="text-align: center;">
+Figure 6: GCV curve.
+</div>
+
+The GCV curve is convex with minimum realized at the optimal value selected by the method -- specifically, 0.0001.
+
+The regression model fit over the region of interest is instead displayed below (left). For qualitative comparison, the SST data from NASA satellite images is also displayed (right).
+
+```{r mapview_SST_iso_grid, fig.width=8.3, fig.height=5}
+# Interactive plot
+map1 <- mapview(f_SST_iso_grid, crs = 4326, col.regions = inferno,
+                na.color = "transparent", layer.name = "SST [°C]") +
+  mapview(domain, col.regions = "transparent", alpha.regions = 0,
+          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+map2 <- mapview(SST - 273.15, col.regions = inferno, na.color = "transparent",
+                layer.name = "SST [°C]") +
+  mapview(domain, col.regions = "transparent", alpha.regions = 0,
+          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+sync(map1, map2)
+```
+
+<div style="text-align: center;">
+Figure 7: SST estimate provided by the isotropic `SR-PDE`$(I,\mathbf{0},0)$ (without covariates) with $\lambda$ selected via GCV minimization through grid search (left) and SST data from NASA satellite images (right). We recall that the latter are not used for estimation purposes; they are displayed here solely to allow comparison with the SST estimate computed by the proposed `SR-PDE` method based on the 30 observations measured at the moored buoys.
+</div>
+
+The smoothing fit appears slightly more accurate than the previous fit compared to the satellite image data, although the anisotropy and non-stationarity behaviors could be captured by incorporating problem-specific knowledge derived from the physics of the underlying phenomenon.
+
+### `SR-PDE` model fitting for physics-informed smoothing (without covariates)
+
+The phenomenon under study is heavily influenced by the *Gulf Stream*, a warm, swift, and non-stationary current in the Atlantic Ocean. The proposed `SR-PDE` method is well-suited for this type of data analysis, as it allows for the incorporation of physical knowledge into the modeling framework. In fact, the influence of the Gulf Stream on the spatial distribution of the considered oceanographic quantity can be properly captured by a diffusion-transport PDE. Thus, we apply physics-informed smoothing to the SST data, hereafter referred to as `SR-PDE`$(K,\mathbf{b},0)\,.$ This means that we consider:
+
+- a **stationary and isotropic diffusion tensor**: $K = \eta I\,,$ where the diffusion intensity $\eta = 0.0218$ (assumed known; see, e.g., @bernardi2018modeling, @tomasetto2024modeling) and $I$ is the identity matrix;
+
+- a **space-varying transport vector**: $\mathbf{b}(\mathbf{p})\,,$ which stores the Gulf Stream velocity at location $\mathbf{p}\,;$
+
+- a **null reaction coefficient**: $c = 0\,;$
+
+- a **null forcing term**: $u \equiv 0\,.$
+
+We specify that the reaction coefficient can be set to zero, as the shrinkage effect is not relevant to the phenomenon under study. Moreover, the relatively small value of the diffusion intensity $\eta\,,$ compared to the values assumed by $\mathbf{b}(\mathbf{p})$ over the domain of interest, highlights that the transport term has a significant impact on the phenomenon under study, as it dominates the diffusion effect.
+
+#### PDE parameters
+
+We now define PDE parameters. To this aim, the evaluation of the transport term at any arbitrary location $(x,y)$ is performed by extracting values from the files `data/SRPDE_2D/raster/Transport_x.RData` and `data/SRPDE_2D/raster/Transport_y.RData` using the `raster` [@hijmans2025raster] R package. These data -- specifically, the direction and intensity of the Gulf Stream around the Florida peninsula -- are provided by the [Ocean Surface Current Analysis Real-time (OSCAR)](https://podaac.jpl.nasa.gov/dataset/OSCAR%CB%99L4%CB%99OC%CB%99third-deg) dataset, with a 5-day resolution. The following `get_transport_x` and `get_transport_y` functions extract the horizontal and vertical components at $(x,y)\,,$ and the `get_transport_coeff` function extracts the magnitude of the transport term at $(x,y)\,.$
+
+```{r transport}
+# Load the horizontal component of the transport term as a raster object
+load("data/SRPDE_2D/raster/Transport_x.RData")
+Transport_x
+
+# Load the vertical component of the transport term as a raster object
+load("data/SRPDE_2D/raster/Transport_y.RData")
+Transport_y
+
+# Get horizontal component of the transport term at (x,y)
+get_transport_x <- function(x, y){
+  value = extract(Transport_x, cbind(x, y))
+  return(value)
+}
+
+# Get vertical component of the transport term at (x,y)
+get_transport_y <- function(x, y){
+  value = extract(Transport_y, cbind(x, y))
+  return(value)
+}
+
+# Get the magnitude of the transport term at (x,y)
+get_transport_coeff <- function(x, y){
+  value = (get_transport_x(x = x, y = y))^2 + (get_transport_y(x = x, y = y))^2
+  return(sqrt(value))
+}
+```
+The transport term can be visualized as follows:
+
+```{r, include=FALSE}
+api_key <- "fb54a5be-c19e-4554-a03b-2c25a15a279f"
+register_stadiamaps(api_key)
+```
+
+```{r ggplot_transport, warning=FALSE, fig.width=8.3, fig.height=4}
+# Create a data.frame with transport term values
+df <- as.data.frame(coordinates(SST))
+names(df) <- c("lon", "lat")
+df$Transport_x <- ifelse(is.na(values(SST)), NA,
+                         get_transport_x(x = df$lon, y = df$lat))
+df$Transport_y <- ifelse(is.na(values(SST)), NA,
+                         get_transport_y(x = df$lon, y = df$lat))
+df$Transport_coeff <- ifelse(is.na(values(SST)), NA,
+                             get_transport_coeff(x = df$lon, y = df$lat))
+
+# Thin out the number of vectors
+df <- df %>% filter(row_number() %% 1000 == 0)
+
+## [STADIA MAPS API KEY]
+# Insert here your API key; for link and instruction: ??register_stadiamaps
+# register_stadiamaps(key = "---your API key---", write = TRUE)
+
+# Compute the bounding box
+bbox <- extent(SST)
+
+# Static plot
+ggmap(get_stadiamap(bbox = c(left = bbox@xmin, bottom = bbox@ymin,
+                             right = bbox@xmax, top = bbox@ymax),
+                    zoom = 7,
+                    maptype = "alidade_smooth",
+                    color = "bw")) +
+  geom_segment(aes(xend = lon + Transport_x, yend = lat + Transport_y,
+                   colour = Transport_coeff),
+               data = df,
+               arrow = arrow(angle = 23, length = unit(0.13, "inches")),
+               size = 1.1,
+               alpha = 1) +
+  scale_color_gradientn(colours = rocket(n = 100, end = 0.87)) +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 8),
+        text = element_text(size = 14)) +
+  labs(color = "Velocity [m/s]") +
+  theme(text = element_text(size = 14)) +
+  guides(colour = guide_colourbar(barheight = unit(7, "cm"),
+                                  barwidth = unit(0.55, "cm"),
+                                  raster = TRUE, ticks = FALSE))
+```
+
+<div style="text-align: center;">
+Figure 8: Gulf Stream velocity around the Florida peninsula.
+</div>
+
+Thus, we can define:
+
+```{r PDE_parameters}
+# Diffusion tensor
+K <- 0.0218 * diag(2)
+
+# Space-varying transport vector
+b <- function(points){
+  output = array(data = 0, c(nrow(points),2))
+  for (i in 1:nrow(points)){
+    output[i,1] = get_transport_x(x = points[i,1], y = points[i,2])
+    output[i,2] = get_transport_y(x = points[i,1], y = points[i,2])
+  }
+  return(output)
+}
+```
+
+We do not specify the reaction coefficient or the forcing term above, meaning that both are set to 0 by default when setting up the `sr` model.
+
+#### Physics-informed smoothing with optimization of the smoothing parameter via Generalized Cross-Validation (GCV) minimization using Newton's method
+
+We perform the physics-informed `SR-PDE`$(K,\mathbf{b},0)$ method. Here, the optimal smoothing parameter is selected via GCV minimization using Newton's method. This technique needs the exact computation of the degrees of freedom.
+
+```{r SST_physics, results="hide"}
+# Proposed values for the smoothing parameter
+lambda_grid <- 10^seq(from = -6, to = -2, by = 0.2)
+
+# Set up the finite element function
+f_SST_physics <- fe_function(mesh, type = "P1")
+
+# Physics-informed smoothing model
+model_SST_physics <- sr(formula = SST ~ f_SST_physics, data = florida,
+                        penalty = fe_elliptic(K = K, b = b))
+
+# Physics-informed smoothing fit with Newton's method for GCV minimization
+fit_SST_physics <- model_SST_physics$fit(calibrator = 
+  gcv(optimizer = grid_search(grid = lambda_grid))
+)
+```
+
+We print the regression model outputs.
+
+```{r SST_physics_output}
+# Fitted values at mesh nodes
+head(f_SST_physics$coeff)
+
+# Fitted values at locations
+head(model_SST_physics$fitted)
+
+# Residuals at locations: response - fitted values
+SST_physics_residuals <- c(florida[["ocean"]]$SST - model_SST_physics$fitted)
+summary(SST_physics_residuals)
+
+# Optimal value selected for the smoothing parameter
+lambda_opt_physics <- fit_SST_physics$optimum
+lambda_opt_physics
+```
+
+The regression model fit over the region of interest is instead displayed below (bottom right). For qualitative comparison, the SST data from NASA satellite images is also displayed (top right).
+
+```{r mapview_SST_physics, fig.width=8.3, fig.height=5}
+# Interactive plot
+map1 <- mapview(florida[["ocean"]], varnames = "SST", crs = 4326, layer.name = "SST [°C]",
+                color_palettes = list("inferno"), na.color = "transparent") +
+  mapview(domain, col.regions = "transparent", alpha.regions = 0,
+          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+map2 <- mapview(SST - 273.15, col.regions = inferno, na.color = "transparent",
+                layer.name = "SST [°C]") +
+  mapview(domain, col.regions = "transparent", alpha.regions = 0,
+          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+map3 <- mapview(f_SST_iso_grid, crs = 4326, col.regions = inferno,
+                na.color = "transparent", layer.name = "SST [°C]") +
+  mapview(domain, col.regions = "transparent", alpha.regions = 0,
+          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+map4 <- mapview(f_SST_physics, crs = 4326, col.regions = inferno,
+                na.color = "transparent", layer.name = "SST [°C]") +
+  mapview(domain, col.regions = "transparent", alpha.regions = 0,
+          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+sync(map1, map2, map3, map4, ncol = 2)
+```
+
+<div style="text-align: center;">
+Figure 9: SST data observed at 30 monitoring stations located in the Gulf of Mexico (top left); SST data from NASA satellite images (top right); SST estimate provided by the isotropic `SR-PDE`$(I,\mathbf{0},0)$ with $\lambda$ selected via GCV minimization using Netwon's method (bottom left); SST estimate provided by the physics-informed `SR-PDE`$(K,\mathbf{b},0)$ with $\lambda$ selected via GCV minimization using Netwon's method (bottom right). We recall that the latter are not used for estimation purposes; they are displayed here solely to allow comparison with the SST estimate computed by the proposed `SR-PDE` method based on the 30 observations measured at the moored buoys.
+</div>
+
+This model fitting proves to capture the strongly anisotropic and non-stationary pattern of the SST. By leveraging problem-specific information -- specifically, the presence of the Gulf Stream -- the proposed `SR-PDE`$(K,\mathbf{b},0)$ method accurately estimates the spatial distribution of the quantity under study using only the buoy measurements.
+
+This insight is further supported by the boxplot of the residuals from the two methods, as shown in the plot below. For the plot of the root mean square error in cross-validation, refer to @tomasetto2024modeling.
+
+```{r SST_boxplot, fig.width=8.3, fig.height=5}
+# Boxplot
+par(family = "serif")
+boxplot(SST_iso_grid_residuals, SST_physics_residuals,
+        col = rocket(2), ylab = "residuals")
+axis(1, at = 1:2, line = 0.5, tick = FALSE,
+     labels = c("ISOTROPIC SR-PDE\n (GRID)", "PHYSICS-INFORMED SR-PDE\n (NEWTON)"))
+```
+
+<div style="text-align: center;">
+Figure 10: Boxplot of the residuals from the isotropic `SR-PDE`$(I,\mathbf{0},0)$, with $\lambda$ selected via GCV minimization using grid search (first) and Newton's method (second), and from the physics-informed `SR-PDE`$(K,\mathbf{b},0)$ (third).
+</div>
+
+### `SR-PDE` model fitting for physics-informed smoothing (with covariates)
+
+The `SR-PDE` model can incorporate covariates associated with the corresponding observed data values. We present an example based on the Dissolved Oxygen (DO) data, measured in $\mu\,\text{mol} / \text{kg}$, and modeled using the Sea Surface Temperature (SST) as a covariate. The recorded values for SST and DO are shown in the interactive plot below.
+
+```{r mapview_DO_data, fig.width=8.3, fig.height=5}
+# Interactive plot
+map1 <- mapview(florida[["ocean"]], varnames = "SST", crs = 4326,
+                color_palettes = list("inferno"), na.color = "transparent",
+                layer.name = "SST [°C]") +
+  mapview(domain, col.regions = "transparent", alpha.regions = 0,
+          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+map2 <- mapview(florida[["ocean"]], varnames = "DO", crs = 4326,
+                color_palettes = list("viridis"), na.color = "transparent",
+                layer.name = "DO") +
+  mapview(domain, col.regions = "transparent", alpha.regions = 0,
+          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+sync(map1, map2)
+```
+
+<div style="text-align: center;">
+Figure 11: SST (left) and DO (right) observed at 30 monitoring stations located in the Gulf of Mexico, around the Florida peninsula, on April 1, 2020.
+</div>
+
+DO is strongly negatively correlated with SST, with a Pearson correlation coefficient of approximately −0.7125017.
+
+```{r correlation}
+cor(x = florida[["ocean"]]$SST, y = florida[["ocean"]]$DO, method = "pearson")
+```
+
+As water temperature rises, molecular motion increases, reducing the solubility of oxygen and leading to lower dissolved oxygen levels. Thus, we apply physics-informed smoothing to the DO data, including the SST data as a covariate into the modeling framework. This means that we consider:
+
+- a **stationary and isotropic diffusion tensor**: $K = \eta I\,,$ where the diffusion intensity $\eta = 1.1341$ (assumed known; see, e.g., @tomasetto2024modeling) and $I$ is the identity matrix;
+
+- a **space-varying transport vector**: $\mathbf{b}(\mathbf{p})\,,$ which stores the Gulf Stream velocity at location $\mathbf{p}\,;$
+
+- a **null reaction coefficient**: $c = 0\,;$
+
+- a **null forcing term**: $u \equiv 0\,.$
+
+We modify the diffusion intensity value accordingly, while keeping all other PDE parameters unchanged from those used in the `SR-PDE`$(K,\mathbf{b},0)$ method applied to the SST data.
+
+```{r PDE_diffusion}
+# Diffusion tensor
+K <- 1.1341 * diag(2)
+```
+
+We perform the anisotropic `SR-PDE`$(K,\mathbf{b},0)$ method. Here, the optimal smoothing parameter is selected via GCV minimization using Grid Search method. This technique consier the stochastic computation of the degrees of freedom.
+
+```{r  DO_physics}
+# Set up the finite element function
+f_DO_physics <- fe_function(mesh, type = "P1")
+
+# Physics-informed smoothing model
+model_DO_physics <- sr(formula = DO ~ SST + f_DO_physics, data = florida,
+                        penalty = fe_elliptic(K = K, b = b))
+
+# Physics-informed smoothing fit Grid Search method for GCV minimization
+fit_DO_physics <- model_DO_physics$fit(
+  calibrator = gcv(optimizer = grid_search(lambda_grid))
+)
+```
+
+We print the regression model outputs.
+
+```{r DO_physics_output}
+# Fitted values at mesh nodes
+head(f_DO_physics$coeff)
+
+# Fitted values at locations
+head(model_DO_physics$fitted)
+
+# Residuals at locations: response - fitted values
+DO_physics_residuals <- c(florida[["ocean"]]$DO - model_DO_physics$fitted)
+summary(DO_physics_residuals)
+
+# Optimal value selected for the smoothing parameter
+lambda_opt_physics <- fit_DO_physics$optimum
+lambda_opt_physics
+
+# Estimate of parameter beta
+model_DO_physics$beta
+```
+
+The regression model fit over the region of interest is instead displayed below.
+
+```{r mapview_DO_physics, fig.width=8.3, fig.height=5}
+# Interactive plot
+map1 <- mapview(f_DO_physics, crs = 4326, col.regions = viridis,
+                na.color = "transparent", layer.name = "DO") +
+  mapview(domain, col.regions = "transparent", alpha.regions = 0,
+          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+map2 <- mapview(florida[["ocean"]], varnames = "DO", crs = 4326,
+                color_palettes = list("viridis"), na.color = "transparent",
+                layer.name = "DO") +
+  mapview(domain, col.regions = "transparent", alpha.regions = 0,
+          col = "black", lwd = 1.5, layer.name = "domain", legend = FALSE)
+
+sync(map1, map2)
+```
+
+<div style="text-align: center;">
+Figure 12: SST estimate provided by the physics-informed `SR-PDE`$(K,\mathbf{b},0)$ with $\lambda$ selected via GCV minimization using Netwon's method and using SST as a covariate (left); DO data observed at 30 monitoring stations located in the Gulf of Mexico (right).
+</div>
+
+This model fitting successfully proves to capture the strongly anisotropic and non-stationary pattern exhibited by the DO data, leveraging both the physics of the underlying phenomenon and information from the SST data.
+
+## References

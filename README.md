@@ -4,7 +4,7 @@
 
 # A warm welcome to the `fdaPDE` world!
 
-`fdaPDE` is a library for *physics-informed spatial and functional data analysis*, at the intersection of statistics and numerical analysis, designed for data located over *complex multidimensional domains*,
+`fdaPDE` is a library for *physics-informed statistical learning of spatial and functional data*, at the intersection of statistics and numerical analysis, designed for data located over *complex multidimensional domains*,
  ranging from irregular planar regions and curved surfaces to linear networks and volumes. The use of Partial Differential Equations (PDEs) allows incorporating information derived from the *physics* of 
  the problem under study into the *statistical modeling*, making `fdaPDE` an extremely flexible tool for the analysis of complex data.
 
@@ -75,23 +75,25 @@ If **Docker** is not yet installed on your machine, please refer to the **Instal
 docker pull aldoclemente/fdapde-docker:rstudio
 ```
 
-To run a container, execute (replacing `/path/to/data` with the full path to the folder containing your data or course material):
+To run a container, execute (replacing `/path/to/IWSM25_short_course` with the **absolute path** to your local copy of the course material):
 
 ```bash
-docker run --rm -d -p 8787:8787 -v /path/to/data:/home/user/data --name rstudio -e PASSWORD=password aldoclemente/fdapde-docker:rstudio
+docker run --rm -d -p 8787:8787 -v /path/to/IWSM25_short_course:/home/user/IWSM25_short_course --name rstudio -e PASSWORD=password aldoclemente/fdapde-docker:rstudio
 ```
 
 This will launch an `RStudio Server` instance inside **Docker**. You can then access `RStudio` in your browser at [http://localhost:8787](http://localhost:8787).
+We suggest using **Google Chrome** as browser (we encountered some small rendering issues using **Firefox**).   
 
 Log in with:
 
 * **Username**: `user`
 * **Password**: `password`
 
+
 Inside `RStudio`, set your working directory by running:
 
 ```
-setwd("data/")
+setwd("IWSM25_short_course/")
 ```
 
 You have read/write permissions in this directory, so you can modify scripts, save results, etc. All changes are reflected on your local machine. You can safely close and reconnect to [http://localhost:8787](http://localhost:8787) at any time.
