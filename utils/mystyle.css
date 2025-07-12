@@ -1,0 +1,70 @@
+/* General styling for the entire document */
+body {
+  font-family: "Times New Roman", Times, serif;  /* Sets the font for the body text */
+  font-size: 16px;                   /* Sets the font size */
+  background-color: #f4f4f4;       /* Sets a light gray background color */
+  color: #000;                     /* Sets the text color */
+  max-width: 800px;                  /* Restrict page width */
+  margin: auto;                      /* Center content */
+}
+
+/* Title styling */
+h1 {
+  color: #102C53;                  /* Sets the color of the title */
+  font-size: 2.5em;                  /* Sets the font size for the title */
+  margin-bottom: -0.25em;            /* Adds space below the title */
+}
+
+/* Subtitle styling */
+h2 {
+  color: #102C53;                  /* Sets the subtitle text color */
+  font-size: 1.5em;                  /* Sets the font size for the subtitle */
+  margin-bottom: 20px;               /* Adds space below the subtitle */
+}
+
+/* Styling for headers (h3, h4, etc.) */
+h3, h4 {
+  color: #102C53;                  /* Sets the color of subheadings */
+  font-size: 1.2em;                  /* Sets the font size for the subtitle */
+  font-weight: bold;                 /* Makes subheadings bold */
+}
+
+/* Code block styling */
+pre, code {
+  background-color: #e6e6e6;       /* Sets a light background for code blocks */
+  font-size: 15px;                   /* Sets the font size */
+  color: #333333 ;                  /* Sets the color of the code text */
+}
+
+/* Link styling */
+a {
+  color: #007bff;                  /* Sets the color for links */
+  text-decoration: none;             /* Removes underline from links */
+}
+
+a:hover {
+  text-decoration: underline;        /* Adds underline when the mouse hovers over a link */
+}
+
+/* Add a border around images */
+img {
+  border: 2px solid #ddd;          /* Adds a light gray border around images */
+  border-radius: 5px;                /* Rounds the corners of images */
+  margin: 10px 0;                    /* Adds space above and below the image */
+  display: block;                    /* Ensures the image is displayed as a block */
+  margin-left: auto;                 /* Centers the image horizontally */
+  margin-right: auto;
+}
+
+/* Styling for blockquotes */
+blockquote {
+  border-left: 5px solid #102C53;  /* Adds a blue left border for blockquotes */
+  padding-left: 10px;                /* Adds padding to the left of the blockquote */
+  font-style: italic;                /* Makes blockquote text italic */
+  color: #555;                     /* Sets a gray color for blockquote text */
+  margin: 20px 0;                    /* Adds space above and below the blockquote */
+}
+
+p {
+  text-align: justify;
+}
