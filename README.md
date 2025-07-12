@@ -24,20 +24,47 @@ with a fully configured environment that includes the development version of the
 
 ## Recommended Setup
 
-* **macOS** and **Linux** users: we strongly recommend using the **Docker** image.
+* **macOS** and **Linux** users: we strongly recommend using the **Docker** image, which already contains the development version of the `fdaPDE` package along with other useful packages.
 
 * **Windows** users: 
 
-  * If your machine supports **R version $\geq$ 4.5.0** (for reference, R version 4.5.0 was released on April 11, 2025), install it along with `RTools45` (download available [here](https://cran.r-project.org/bin/windows/Rtools/rtools45/rtools.html). This is the preferred approach, if compatible. Once R version $\geq$ 4.5.0 and `RTools45` are installed, install the library from GitHub. In the R console, type:
+  * If your machine supports **R version $\geq$ 4.5.0** (for reference, R version 4.5.0 was released on April 11, 2025), install it along with `RTools45` (download available [here](https://cran.r-project.org/bin/windows/Rtools/rtools45/rtools.html)). 
+    This is the preferred approach, if compatible. Once R version $\geq$ 4.5.0 and `RTools45` are installed, install the library from GitHub. In the R console, type:
 
     ```
     install.packages("devtools")
     devtools::install_github("https://github.com/fdaPDE/fdaPDE-R")
     ``` 
+    
+    Additionally, we recommend installing the following R packages:
 
-  * Alternatively, use the **Docker** image (this requires Windows Subsystem for Linux -- see instructions below).
+    ```
+    install.packages(c("ggmap", "ggplot2", "latex2exp", "leafsync", 
+                        "mapview", "patchwork", "R6", "Rcpp", "RcppEigen",
+                        "RTriangle", "raster", "sf", "viridis"))
+
+    ```
+
+  * Alternatively, use the **Docker** image (this requires Windows Subsystem for Linux -- see instructions below). 
+    
+
 
 ---
+
+## Data 
+
+The data for this short course can be downloaded from [this link](https://polimi365-my.sharepoint.com/:f:/g/personal/10539238_polimi_it/Ev1ynJ1q9DdNvmMZ0HUhafABeAjj1_Rezl7MqU3Jbdbieg?e=DyVDTc). 
+Please store the downloaded content inside the folder associated with this repository. You can either clone this GitHub repository or download it as a `.zip` file and extract it.
+Your working directory should look as follows:
+
+```
+📁 IWSM25_short_course
+    📁 data
+    📁 scripts
+    📁 vignettes
+```
+
+The `vignettes/` folder contains the vignettes that will be presented during the course, while the `scripts/` folder includes the same examples in plain R script format.
 
 ## Docker Image
 
