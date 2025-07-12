@@ -1,5 +1,5 @@
 ---
-title: "Density Estimation over Irregular Planar Regions with fdaPDE"
+title: "Density Estimation with Partial Differential Equation Regularization"
 author: "Simone Panzeri @ fdaPDE Team, MOX, Department of Mathematics, Politecnico di Milano, Italy"
 date: ""
 output:
