@@ -5,7 +5,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   message = FALSE,
-  warning = FALSE
+  warning = FALSE,
+  root.dir = "$(pwd)/../"
 )
 
 
@@ -15,7 +16,7 @@ library(fdaPDE2)           # v. 2.0 (2025)
 rm(list = ls())
 
 # Load additional libraries and helper functions for plotting
-source("utils/graphics.R")
+source("../utils/graphics.R")
 
 
 ## ----theme, echo=FALSE--------------------------------------------------------
@@ -31,7 +32,7 @@ theme_set(theme_minimal() +
 
 ## ----spatial_domain-----------------------------------------------------------
 ## [SPATIAL DOMAIN]
-domain <- st_read(dsn = "data/SRPDE_2D/domain/SRPDE_2D_domain.shx")
+domain <- st_read(dsn = "../data/SRPDE_2D/domain/SRPDE_2D_domain.shx")
 domain
 
 
@@ -120,7 +121,7 @@ florida
 ## ----data---------------------------------------------------------------------
 ## [DATA]
 # Load the data
-data <- read.table(file = "data/SRPDE_2D/SRPDE_2D_data.txt")
+data <- read.table(file = "../data/SRPDE_2D/SRPDE_2D_data.txt")
 head(data)
 
 # Convert data into a sf object
@@ -141,7 +142,7 @@ mapview(florida[["ocean"]], crs = 4326,
 
 ## ----SST----------------------------------------------------------------------
 # Load the SST data from NASA satellite images as a raster object
-load("data/SRPDE_2D/raster/SST.RData")
+load("../data/SRPDE_2D/raster/SST.RData")
 SST
 
 
@@ -256,11 +257,11 @@ sync(map1, map2)
 
 ## ----transport----------------------------------------------------------------
 # Load the horizontal component of the transport term as a raster object
-load("data/SRPDE_2D/raster/Transport_x.RData")
+load("../data/SRPDE_2D/raster/Transport_x.RData")
 Transport_x
 
 # Load the vertical component of the transport term as a raster object
-load("data/SRPDE_2D/raster/Transport_y.RData")
+load("../data/SRPDE_2D/raster/Transport_y.RData")
 Transport_y
 
 # Get horizontal component of the transport term at (x,y)
@@ -283,8 +284,8 @@ get_transport_coeff <- function(x, y){
 
 
 ## ----include=FALSE------------------------------------------------------------
-#api_key <- "..."
-#register_stadiamaps(api_key)
+api_key <- "..." # your stadiamaps key
+register_stadiamaps(api_key)
 
 
 ## ----ggplot_transport, warning=FALSE, fig.width=8.3, fig.height=4-------------

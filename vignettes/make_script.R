@@ -1,0 +1,7 @@
+library(knitr)
+if(!dir.exists("../scripts")) dir.create("../scripts")
+xfun::Rscript_call(purl, list(input = 'SRPDE_2D.Rmd', output = '../scripts/SRPDE_2D.R'))
+xfun::Rscript_call(purl, list(input = 'QSRPDE_2D.Rmd', output = '../scripts/QSRPDE_2D.R'))
+xfun::Rscript_call(purl, list(input = 'GSRPDE_2D.Rmd', output = '../scripts/GSRPDE_2D.R'))
+xfun::Rscript_call(purl, list(input = 'DEPDE_2D.Rmd', output = '../scripts/DEPDE_2D.R'))
+xfun::Rscript_call(purl, list(input = 'fPCA.Rmd', output = '../scripts/fPCA.R'))

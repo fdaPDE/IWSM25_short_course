@@ -5,8 +5,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   message = FALSE,
-  warning = FALSE
-)
+  warning = FALSE)
 
 
 ## ----fdaPDE, eval=TRUE--------------------------------------------------------
@@ -15,7 +14,7 @@ library(fdaPDE2)           # v. 2.0 (2025)
 rm(list = ls())
 
 # Load additional libraries and helper functions for plotting
-source("utils/graphics.R")
+source("../utils/graphics.R")
 
 
 ## ----theme, echo=FALSE--------------------------------------------------------
@@ -32,7 +31,7 @@ theme_set(theme_minimal() +
 ## ----data---------------------------------------------------------------------
 ## [DATA]
 # Load the data
-data <- read.table(file = "data/DEPDE_2D/DEPDE_2D_data.txt")
+data <- read.table(file = "../data/DEPDE_2D/DEPDE_2D_data.txt")
 head(data)
 
 # Select the first 2000 rows (first year)
@@ -42,11 +41,11 @@ data <- data[1:2000,]
 ## ----spatial_domain-----------------------------------------------------------
 ## [SPATIAL DOMAIN]
 # Load the boundary nodes
-boundary_nodes <- read.table(file = "data/DEPDE_2D/DEPDE_2D_boundary_nodes.txt")
+boundary_nodes <- read.table(file = "../data/DEPDE_2D/DEPDE_2D_boundary_nodes.txt")
 head(boundary_nodes)
 
 # Load the boundary segments
-boundary_segments <- read.table(file = "data/DEPDE_2D/DEPDE_2D_boundary_segments.txt")
+boundary_segments <- read.table(file = "../data/DEPDE_2D/DEPDE_2D_boundary_segments.txt")
 head(boundary_segments)
 
 
@@ -129,7 +128,7 @@ hampshire
 ## ----data2--------------------------------------------------------------------
 ## [DATA]
 # Load the data
-data <- read.table(file = "data/DEPDE_2D/DEPDE_2D_data.txt")
+data <- read.table(file = "../data/DEPDE_2D/DEPDE_2D_data.txt")
 head(data)
 
 # Focus on cases occurred in 2001 (first 2500 cases)

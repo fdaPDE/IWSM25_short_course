@@ -5847,7 +5847,7 @@ load the library in the working environment as follows:</p>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">ls</span>())</span>
 <span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a></span>
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co"># Load additional libraries and helper functions for plotting</span></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;utils/graphics.R&quot;</span>)</span></code></pre></div>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;../utils/graphics.R&quot;</span>)</span></code></pre></div>
 </div>
 <div id="application-study-on-gastrointestinal-infections-in-southampton-hampshire-county-uk" class="section level2">
 <h2>Application study on gastrointestinal infections in Southampton,
@@ -5861,10 +5861,10 @@ interest was observed; see also <span class="citation">Diggle et al.
 <div id="spatial-domain" class="section level3">
 <h3>Spatial domain</h3>
 <p>We import the preprocessed data from the file
-<code>data/DEPDE_2D/DEPDE_2D_data.txt</code>.</p>
+<code>../data/DEPDE_2D/DEPDE_2D_data.txt</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="do">## [DATA]</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co"># Load the data</span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="at">file =</span> <span class="st">&quot;data/DEPDE_2D/DEPDE_2D_data.txt&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="at">file =</span> <span class="st">&quot;../data/DEPDE_2D/DEPDE_2D_data.txt&quot;</span>)</span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="fu">head</span>(data)</span>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt;         lon      lat</span></span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; 1 -1.101737 50.86110</span></span>
@@ -5878,11 +5878,11 @@ interest was observed; see also <span class="citation">Diggle et al.
 <span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>data <span class="ot">&lt;-</span> data[<span class="dv">1</span><span class="sc">:</span><span class="dv">2000</span>,]</span></code></pre></div>
 <p>To get the boundary of the spatial domain under consideration, we
 import the boundary nodes and segments from the files
-<code>data/DEPDE_2D/DEPDE_2D_boundary_nodes.txt</code> and
-<code>data/DEPDE_2D/DEPDE_2D_boundary_segments.txt</code>.</p>
+<code>../data/DEPDE_2D/DEPDE_2D_boundary_nodes.txt</code> and
+<code>../data/DEPDE_2D/DEPDE_2D_boundary_segments.txt</code>.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="do">## [SPATIAL DOMAIN]</span></span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co"># Load the boundary nodes</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>boundary_nodes <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="at">file =</span> <span class="st">&quot;data/DEPDE_2D/DEPDE_2D_boundary_nodes.txt&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>boundary_nodes <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="at">file =</span> <span class="st">&quot;../data/DEPDE_2D/DEPDE_2D_boundary_nodes.txt&quot;</span>)</span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">head</span>(boundary_nodes)</span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt;       lon     lat</span></span>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; 1 -1.4674 50.9102</span></span>
@@ -5893,7 +5893,7 @@ import the boundary nodes and segments from the files
 <span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; 6 -1.4082 50.8938</span></span>
 <span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a></span>
 <span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co"># Load the boundary segments</span></span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>boundary_segments <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="at">file =</span> <span class="st">&quot;data/DEPDE_2D/DEPDE_2D_boundary_segments.txt&quot;</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>boundary_segments <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="at">file =</span> <span class="st">&quot;../data/DEPDE_2D/DEPDE_2D_boundary_segments.txt&quot;</span>)</span>
 <span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="fu">head</span>(boundary_segments)</span>
 <span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt;   V1 V2</span></span>
 <span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt; 1  1  2</span></span>
@@ -6037,13 +6037,13 @@ estimation method.</p>
 <code>geoframe</code> object defined above, thus obtaining a format
 compatible with the implementation of the proposed regression method.
 The layer contains the preprocessed data from the file
-<code>data/DEPDE_2D/DEPDE_2D_data.txt</code>, which is loaded into the
-working environment as a <code>data.frame</code> object. To simplify the
-analysis, here we restrict our attention to the first <span class="math inline">\(2\,500\)</span> cases, corresponding to events
+<code>../data/DEPDE_2D/DEPDE_2D_data.txt</code>, which is loaded into
+the working environment as a <code>data.frame</code> object. To simplify
+the analysis, here we restrict our attention to the first <span class="math inline">\(2\,500\)</span> cases, corresponding to events
 recorded in 2001.</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="do">## [DATA]</span></span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co"># Load the data</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="at">file =</span> <span class="st">&quot;data/DEPDE_2D/DEPDE_2D_data.txt&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="at">file =</span> <span class="st">&quot;../data/DEPDE_2D/DEPDE_2D_data.txt&quot;</span>)</span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="fu">head</span>(data)</span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt;         lon      lat</span></span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; 1 -1.101737 50.86110</span></span>

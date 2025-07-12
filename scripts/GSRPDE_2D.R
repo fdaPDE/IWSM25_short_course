@@ -15,7 +15,7 @@ library(fdaPDE2)           # v. 2.0 (2025)
 rm(list = ls())
 
 # Load additional libraries and helper functions for plotting
-source("utils/graphics.R")
+source("../utils/graphics.R")
 
 
 ## ----theme, echo=FALSE--------------------------------------------------------
@@ -32,7 +32,7 @@ theme_set(theme_minimal() +
 ## ----data---------------------------------------------------------------------
 ## [DATA]
 # Load the data
-data_sf <- st_read(dsn = "data/GSRPDE_2D/GSRPDE_2D_data.shp")
+data_sf <- st_read(dsn = "../data/GSRPDE_2D/GSRPDE_2D_data.shp")
 head(data_sf)
 
 # Number of data (i.e., of provinces)
@@ -57,15 +57,15 @@ mapview(provinces_sf, col.regions = "gray75", lwd = 1.5,
 ## ----mesh---------------------------------------------------------------------
 ## [MESH]
 # Load the mesh nodes
-mesh_nodes <- read.table(file = "data/GSRPDE_2D/GSRPDE_2D_mesh_nodes.txt")
+mesh_nodes <- read.table(file = "../data/GSRPDE_2D/GSRPDE_2D_mesh_nodes.txt")
 head(mesh_nodes)
 
 # Load the nodes markers
-mesh_nodesmarkers <- read.table(file = "data/GSRPDE_2D/GSRPDE_2D_mesh_nodesmarkers.txt")
+mesh_nodesmarkers <- read.table(file = "../data/GSRPDE_2D/GSRPDE_2D_mesh_nodesmarkers.txt")
 head(mesh_nodesmarkers)
 
 # Load the mesh triangles
-mesh_triangles <- read.table(file = "data/GSRPDE_2D/GSRPDE_2D_mesh_triangles.txt")
+mesh_triangles <- read.table(file = "../data/GSRPDE_2D/GSRPDE_2D_mesh_triangles.txt")
 head(mesh_triangles)
 
 # Set up the triangulation for fdaPDE
@@ -111,7 +111,7 @@ italy
 
 ## ----geoframe_layer-----------------------------------------------------------
 # Add layer with data to the geoframe object (directly from the shapefile)
-italy$load_shp(layer = "fires", filename = "data/GSRPDE_2D/GSRPDE_2D_data.shp")
+italy$load_shp(layer = "fires", filename = "../data/GSRPDE_2D/GSRPDE_2D_data.shp")
 italy
 
 
@@ -202,7 +202,7 @@ f_grid$integral()
 
 ## ----mapview_solution_point, fig.width=8.3, fig.height=5----------------------
 # Load locations of fires
-locations <- st_read(dsn = "data/GSRPDE_2D/GSRPDE_2D_locations.shx")
+locations <- st_read(dsn = "../data/GSRPDE_2D/GSRPDE_2D_locations.shx")
 
 # Interactive plot
 map1 <- mapview(f_grid, crs = 4326, col.regions = color_palette_fire_counts,

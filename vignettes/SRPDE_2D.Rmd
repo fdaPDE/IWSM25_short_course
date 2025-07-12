@@ -4,10 +4,10 @@ author: "Simone Panzeri @ fdaPDE Team, MOX, Department of Mathematics, Politecni
 date: ""
 output:
   rmarkdown::html_vignette:
-    css: "utils/mystyle.css"  # Path to custom CSS file
+    css: "../utils/mystyle.css"  # Path to custom CSS file
     fig_caption: yes    # Enable figure caption
-bibliography: "utils/references.bib"  # Path to .bib file with references
-csl: "utils/apa.csl"  # Path to CSL file
+bibliography: "../utils/references.bib"  # Path to .bib file with references
+csl: "../utils/apa.csl"  # Path to CSL file
 vignette: >
   %\VignetteIndexEntry{Spatial Regression with Partial Differential Equation Regularization}
   %\VignetteEngine{knitr::rmarkdown}
@@ -21,7 +21,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   message = FALSE,
-  warning = FALSE
+  warning = FALSE,
+  root.dir = "$(pwd)/../"
 )
 ```
 
@@ -65,7 +66,7 @@ library(fdaPDE2)           # v. 2.0 (2025)
 rm(list = ls())
 
 # Load additional libraries and helper functions for plotting
-source("utils/graphics.R")
+source("../utils/graphics.R")
 ```
 
 ```{r theme, echo=FALSE}
@@ -87,11 +88,11 @@ As a benchmark application in environmental sciences, we consider oceanographic 
 
 First, we load the geometry of the **spatial domain** under study, created by preprocessing the Florida administrative boundary. This stage includes defining the specific region of interest located in the Gulf of Mexico, removing minor islands, and reducing the resolution of the coastlines. We imported the Florida administrative boundary using the `tigris` [@walker2025tigris] R package, and performed subsequent preprocessing steps relying on the `sf` [@pebesma2025sf] and `rmapshaper` [@teucher2025rmapshaper] R packages.
 
-The preprocessed geometry of the spatial domain is available from the file `data/SRPDE_2D/SRPDE_2D_domain.shx` and can be loaded through `sf` as follows.
+The preprocessed geometry of the spatial domain is available from the file `../data/SRPDE_2D/SRPDE_2D_domain.shx` and can be loaded through `sf` as follows.
 
 ```{r spatial_domain}
 ## [SPATIAL DOMAIN]
-domain <- st_read(dsn = "data/SRPDE_2D/domain/SRPDE_2D_domain.shx")
+domain <- st_read(dsn = "../data/SRPDE_2D/domain/SRPDE_2D_domain.shx")
 domain
 ```
 
@@ -197,12 +198,12 @@ florida
 
 ### Data
 
-We import the preprocessed data from the file `data/SRPDE_2D/SRPDE_2D_data.txt` as a `data.frame` object. For the purpose of visualization, we convert this object into a `sf` object. Moreover, we add a data layer to the `geoframe` object defined above, thus obtaining a format compatible with the implementation of the proposed regression method.
+We import the preprocessed data from the file `../data/SRPDE_2D/SRPDE_2D_data.txt` as a `data.frame` object. For the purpose of visualization, we convert this object into a `sf` object. Moreover, we add a data layer to the `geoframe` object defined above, thus obtaining a format compatible with the implementation of the proposed regression method.
 
 ```{r data}
 ## [DATA]
 # Load the data
-data <- read.table(file = "data/SRPDE_2D/SRPDE_2D_data.txt")
+data <- read.table(file = "../data/SRPDE_2D/SRPDE_2D_data.txt")
 head(data)
 
 # Convert data into a sf object
@@ -231,11 +232,11 @@ First, we focus on the SST. The *non-standard shape* of the spatial domain stron
 
 #### SST satellite images
 
-In addition to the data introduced above, the file `data/SRPDE_2D/raster/SST.RData` contains a `raster` [@hijmans2025raster] object with the SST values observed from high resolution satellite images provided by the Jet Propulsion Laboratory of the [National Aeronautics and Space Administration (NASA)](https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1).
+In addition to the data introduced above, the file `../data/SRPDE_2D/raster/SST.RData` contains a `raster` [@hijmans2025raster] object with the SST values observed from high resolution satellite images provided by the Jet Propulsion Laboratory of the [National Aeronautics and Space Administration (NASA)](https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1).
 
 ```{r SST}
 # Load the SST data from NASA satellite images as a raster object
-load("data/SRPDE_2D/raster/SST.RData")
+load("../data/SRPDE_2D/raster/SST.RData")
 SST
 ```
 
@@ -423,15 +424,15 @@ We specify that the reaction coefficient can be set to zero, as the shrinkage ef
 
 #### PDE parameters
 
-We now define PDE parameters. To this aim, the evaluation of the transport term at any arbitrary location $(x,y)$ is performed by extracting values from the files `data/SRPDE_2D/raster/Transport_x.RData` and `data/SRPDE_2D/raster/Transport_y.RData` using the `raster` [@hijmans2025raster] R package. These data -- specifically, the direction and intensity of the Gulf Stream around the Florida peninsula -- are provided by the [Ocean Surface Current Analysis Real-time (OSCAR)](https://podaac.jpl.nasa.gov/dataset/OSCAR%CB%99L4%CB%99OC%CB%99third-deg) dataset, with a 5-day resolution. The following `get_transport_x` and `get_transport_y` functions extract the horizontal and vertical components at $(x,y)\,,$ and the `get_transport_coeff` function extracts the magnitude of the transport term at $(x,y)\,.$
+We now define PDE parameters. To this aim, the evaluation of the transport term at any arbitrary location $(x,y)$ is performed by extracting values from the files `../data/SRPDE_2D/raster/Transport_x.RData` and `../data/SRPDE_2D/raster/Transport_y.RData` using the `raster` [@hijmans2025raster] R package. These data -- specifically, the direction and intensity of the Gulf Stream around the Florida peninsula -- are provided by the [Ocean Surface Current Analysis Real-time (OSCAR)](https://podaac.jpl.nasa.gov/dataset/OSCAR%CB%99L4%CB%99OC%CB%99third-deg) dataset, with a 5-day resolution. The following `get_transport_x` and `get_transport_y` functions extract the horizontal and vertical components at $(x,y)\,,$ and the `get_transport_coeff` function extracts the magnitude of the transport term at $(x,y)\,.$
 
 ```{r transport}
 # Load the horizontal component of the transport term as a raster object
-load("data/SRPDE_2D/raster/Transport_x.RData")
+load("../data/SRPDE_2D/raster/Transport_x.RData")
 Transport_x
 
 # Load the vertical component of the transport term as a raster object
-load("data/SRPDE_2D/raster/Transport_y.RData")
+load("../data/SRPDE_2D/raster/Transport_y.RData")
 Transport_y
 
 # Get horizontal component of the transport term at (x,y)
@@ -455,7 +456,7 @@ get_transport_coeff <- function(x, y){
 The transport term can be visualized as follows:
 
 ```{r, include=FALSE}
-api_key <- "fb54a5be-c19e-4554-a03b-2c25a15a279f"
+api_key <- "..." # your stadiamaps key
 register_stadiamaps(api_key)
 ```
 

@@ -15,7 +15,7 @@ library(fdaPDE2)           # v. 2.0 (2025)
 rm(list = ls())
 
 # Load additional libraries and helper functions for plotting
-source("utils/graphics.R")
+source("../utils/graphics.R")
 
 
 
@@ -32,9 +32,9 @@ theme_set(theme_minimal() +
 
 ## ----geometry, fig.width=8, fig.height=5--------------------------------------
 # Import the boundary nodes and segments of the domain of interest
-boundary_nodes    <- read.table(file = "data/QSRPDE_2D/QSRPDE_2D_boundary_nodes.txt",
+boundary_nodes    <- read.table(file = "../data/QSRPDE_2D/QSRPDE_2D_boundary_nodes.txt",
                                 header = TRUE)
-boundary_segments <- read.table(file = "data/QSRPDE_2D/QSRPDE_2D_boundary_segments.txt")
+boundary_segments <- read.table(file = "../data/QSRPDE_2D/QSRPDE_2D_boundary_segments.txt")
  
 # Define a planar straight-line graph modeling the Switzerland boundary
 p <- pslg(
@@ -65,7 +65,7 @@ mapview(switzerland, crs = 4326, map.type = "CartoDB.Positron",
 
 
 ## ----data, fig.width=8, fig.height=5------------------------------------------
-data <- read.table(file = "data/QSRPDE_2D/QSRPDE_2D_data.txt", header=TRUE)
+data <- read.table(file = "../data/QSRPDE_2D/QSRPDE_2D_data.txt", header=TRUE)
 
 gf <- geoframe(domain = switzerland)
 gf$insert(layer = "rainfall", type = "point", geo = c("lon", "lat"), data = data)

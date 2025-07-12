@@ -4,10 +4,10 @@ author: "Simone Panzeri @ fdaPDE Team, MOX, Department of Mathematics, Politecni
 date: ""
 output:
   rmarkdown::html_vignette:
-    css: "utils/mystyle.css"  # Path to custom CSS file
+    css: "../utils/mystyle.css"  # Path to custom CSS file
     fig_caption: yes    # Enable figure caption
-bibliography: "utils/references.bib"  # Path to .bib file with references
-csl: "utils/apa.csl"  # Path to CSL file
+bibliography: "../utils/references.bib"  # Path to .bib file with references
+csl: "../utils/apa.csl"  # Path to CSL file
 vignette: >
   %\VignetteIndexEntry{Generalized Spatial Regression with Partial Differential Equation Regularization}
   %\VignetteEngine{knitr::rmarkdown}
@@ -57,7 +57,7 @@ library(fdaPDE2)           # v. 2.0 (2025)
 rm(list = ls())
 
 # Load additional libraries and helper functions for plotting
-source("utils/graphics.R")
+source("../utils/graphics.R")
 ```
 
 ```{r theme, echo=FALSE}
@@ -76,12 +76,12 @@ theme_set(theme_minimal() +
 As a benchmark application in environmental sciences, we consider fire count data recorded in Southern Italy, during 2021. In addition to fire counts per administrative division (province), the dataset includes several areal covariates, such as area, elevation, average temperature, solar radiation, total precipitation, population, land use, and land cover, as of 2021. The dataset is freely and publicly available by different data sources, including the [Fire Information for Resource Management System (FIRMS)](https://firms.modaps.eosdis.nasa.gov) of the National Aeronautics and Space Administration (NASA), the [CORINE Land Cover (CLC)](https://land.copernicus.eu/en) from the European Environment Agency (EEA), the [Digital Elevation Model (DEM)](https://tinitaly.pi.ingv.it/Download_Area1_1.html) from the National Institute of Geophysics and Volcanology (INGV), and the [Copernicus ERA5](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-land?tab=overview) from the European Centre for Medium-Range Weather Forecasts (ECMWF) as part of the Copernicus Climate Change Service (C3S). Due to ongoing climate change and global warming, large-scale wildfires are occurring with increasing frequency worldwide, especially in southern Europe. This results in severe repercussions and damage to ecosystems, infrastructures, material assets, and socio-economic activities. Therefore, an in-depth statistical analysis of this phenomenon is becoming crucial for driving the implementation of new policies aimed at preserving both artificial and natural environments.
 
 ### Spatial domain
-We import the preprocessed data observed in Southern Italy during 2021 from the shapefile `data/GSRPDE_2D/GSRPDE_2D_data.shp` as a `sf` [@pebesma2025sf] object.
+We import the preprocessed data observed in Southern Italy during 2021 from the shapefile `../data/GSRPDE_2D/GSRPDE_2D_data.shp` as a `sf` [@pebesma2025sf] object.
 
 ```{r data}
 ## [DATA]
 # Load the data
-data_sf <- st_read(dsn = "data/GSRPDE_2D/GSRPDE_2D_data.shp")
+data_sf <- st_read(dsn = "../data/GSRPDE_2D/GSRPDE_2D_data.shp")
 head(data_sf)
 
 # Number of data (i.e., of provinces)
@@ -109,20 +109,20 @@ mapview(provinces_sf, col.regions = "gray75", lwd = 1.5,
 Figure 1: Boundaries of each of the 33 provinces in Southern Italy.
 </div>
 
-Now we build a **regular mesh** of the spatial domain above. The mesh provides a discretization of the spatial domain, which is required to solve the estimation problem using the finite element method. To do so, we directly load mesh nodes and triangles from `data/GSRPDE/GSRPDE_mesh_nodes.txt` and `data/GSRPDE/GSRPDE_mesh_triangles.txt` files. These files store a matrix of size \#nodes-by-2 containing the $x$ and $y$ coordinates of the mesh nodes, and a matrix of size \#triangles-by-3, where the $i$th row contains the indices of the mesh nodes forming the $i$th triangle. These matrices are obtained using the `femR` [@clemente2025femr] and `RTriangle` [@shewchuk2025RTriangle] R packages; further details are omitted here. Other software can be used to get the triangulation; for example, it can be constructed through the `fmesher` [@lindgren2025fmesher] R package.
+Now we build a **regular mesh** of the spatial domain above. The mesh provides a discretization of the spatial domain, which is required to solve the estimation problem using the finite element method. To do so, we directly load mesh nodes and triangles from `../data/GSRPDE_2D/GSRPDE_2D_mesh_nodes.txt` and `../data/GSRPDE_2D/GSRPDE_2D_mesh_triangles.txt` files. These files store a matrix of size \#nodes-by-2 containing the $x$ and $y$ coordinates of the mesh nodes, and a matrix of size \#triangles-by-3, where the $i$th row contains the indices of the mesh nodes forming the $i$th triangle. These matrices are obtained using the `femR` [@clemente2025femr] and `RTriangle` [@shewchuk2025RTriangle] R packages; further details are omitted here. Other software can be used to get the triangulation; for example, it can be constructed through the `fmesher` [@lindgren2025fmesher] R package.
 
 ```{r mesh}
 ## [MESH]
 # Load the mesh nodes
-mesh_nodes <- read.table(file = "data/GSRPDE_2D/GSRPDE_2D_mesh_nodes.txt")
+mesh_nodes <- read.table(file = "../data/GSRPDE_2D/GSRPDE_2D_mesh_nodes.txt")
 head(mesh_nodes)
 
 # Load the nodes markers
-mesh_nodesmarkers <- read.table(file = "data/GSRPDE_2D/GSRPDE_2D_mesh_nodesmarkers.txt")
+mesh_nodesmarkers <- read.table(file = "../data/GSRPDE_2D/GSRPDE_2D_mesh_nodesmarkers.txt")
 head(mesh_nodesmarkers)
 
 # Load the mesh triangles
-mesh_triangles <- read.table(file = "data/GSRPDE_2D/GSRPDE_2D_mesh_triangles.txt")
+mesh_triangles <- read.table(file = "../data/GSRPDE_2D/GSRPDE_2D_mesh_triangles.txt")
 head(mesh_triangles)
 
 # Set up the triangulation for fdaPDE
@@ -180,7 +180,7 @@ We briefly introduce the data under study. We add a data layer to the `geoframe`
 
 ```{r geoframe_layer}
 # Add layer with data to the geoframe object (directly from the shapefile)
-italy$load_shp(layer = "fires", filename = "data/GSRPDE_2D/GSRPDE_2D_data.shp")
+italy$load_shp(layer = "fires", filename = "../data/GSRPDE_2D/GSRPDE_2D_data.shp")
 italy
 ```
 
@@ -331,7 +331,7 @@ The regression model fit over the fine grid is displayed below (left). In additi
 
 ```{r mapview_solution_point, fig.width=8.3, fig.height=5}
 # Load locations of fires
-locations <- st_read(dsn = "data/GSRPDE_2D/GSRPDE_2D_locations.shx")
+locations <- st_read(dsn = "../data/GSRPDE_2D/GSRPDE_2D_locations.shx")
 
 # Interactive plot
 map1 <- mapview(f_grid, crs = 4326, col.regions = color_palette_fire_counts,

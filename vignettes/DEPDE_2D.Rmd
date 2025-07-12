@@ -4,10 +4,10 @@ author: "Simone Panzeri @ fdaPDE Team, MOX, Department of Mathematics, Politecni
 date: ""
 output:
   rmarkdown::html_vignette:
-    css: "utils/mystyle.css"  # Path to your custom CSS file
+    css: "../utils/mystyle.css"  # Path to your custom CSS file
     fig_caption: yes    # Enable figure caption
-bibliography: "utils/references.bib"  # Path to your .bib file with references
-csl: "utils/apa.csl"  # Path to your CSL file (choose your preferred style)
+bibliography: "../utils/references.bib"  # Path to your .bib file with references
+csl: "../utils/apa.csl"  # Path to your CSL file (choose your preferred style)
 vignette: >
   %\VignetteIndexEntry{Density Estimation over Irregular Planar Regions with fdaPDE}
   %\VignetteEngine{knitr::rmarkdown}
@@ -21,8 +21,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   message = FALSE,
-  warning = FALSE
-)
+  warning = FALSE)
 ```
 
 The `fdaPDE` C++/R library [@arnone2025fdapde] provides advanced statistical methods for *physics-informed spatial and functional data analysis*, featuring regularization terms based on partial differential equations; for a review of this class of methods, refer to @sangalli2021spatial. The library can handle different types of data that may evolve over time on non-standard spatial domains, including linear networks, irregular planar regions, curved surfaces, and volumes. Among the broad range of modeling capabilities offered by `fdaPDE`, we focus here on the **spatial density estimation method**.
@@ -43,7 +42,7 @@ library(fdaPDE2)           # v. 2.0 (2025)
 rm(list = ls())
 
 # Load additional libraries and helper functions for plotting
-source("utils/graphics.R")
+source("../utils/graphics.R")
 ```
 
 ```{r theme, echo=FALSE}
@@ -63,28 +62,28 @@ As a benchmark application in epidemiology, we analyze cases of non-specific gas
 
 ### Spatial domain
 
-We import the preprocessed data from the file `data/DEPDE_2D/DEPDE_2D_data.txt`.
+We import the preprocessed data from the file `../data/DEPDE_2D/DEPDE_2D_data.txt`.
 
 ```{r data}
 ## [DATA]
 # Load the data
-data <- read.table(file = "data/DEPDE_2D/DEPDE_2D_data.txt")
+data <- read.table(file = "../data/DEPDE_2D/DEPDE_2D_data.txt")
 head(data)
 
 # Select the first 2000 rows (first year)
 data <- data[1:2000,]
 ```
 
-To get the boundary of the spatial domain under consideration, we import the boundary nodes and segments from the files `data/DEPDE_2D/DEPDE_2D_boundary_nodes.txt` and `data/DEPDE_2D/DEPDE_2D_boundary_segments.txt`.
+To get the boundary of the spatial domain under consideration, we import the boundary nodes and segments from the files `../data/DEPDE_2D/DEPDE_2D_boundary_nodes.txt` and `../data/DEPDE_2D/DEPDE_2D_boundary_segments.txt`.
 
 ```{r spatial_domain}
 ## [SPATIAL DOMAIN]
 # Load the boundary nodes
-boundary_nodes <- read.table(file = "data/DEPDE_2D/DEPDE_2D_boundary_nodes.txt")
+boundary_nodes <- read.table(file = "../data/DEPDE_2D/DEPDE_2D_boundary_nodes.txt")
 head(boundary_nodes)
 
 # Load the boundary segments
-boundary_segments <- read.table(file = "data/DEPDE_2D/DEPDE_2D_boundary_segments.txt")
+boundary_segments <- read.table(file = "../data/DEPDE_2D/DEPDE_2D_boundary_segments.txt")
 head(boundary_segments)
 ```
 
@@ -184,12 +183,12 @@ hampshire
 
 ### Data
 
-We briefly introduce the data under study. We add a data layer to the `geoframe` object defined above, thus obtaining a format compatible with the implementation of the proposed regression method. The layer contains the preprocessed data from the file `data/DEPDE_2D/DEPDE_2D_data.txt`, which is loaded into the working environment as a `data.frame` object. To simplify the analysis, here we restrict our attention to the first $2\,500$ cases, corresponding to events recorded in 2001.
+We briefly introduce the data under study. We add a data layer to the `geoframe` object defined above, thus obtaining a format compatible with the implementation of the proposed regression method. The layer contains the preprocessed data from the file `../data/DEPDE_2D/DEPDE_2D_data.txt`, which is loaded into the working environment as a `data.frame` object. To simplify the analysis, here we restrict our attention to the first $2\,500$ cases, corresponding to events recorded in 2001.
 
 ```{r data2}
 ## [DATA]
 # Load the data
-data <- read.table(file = "data/DEPDE_2D/DEPDE_2D_data.txt")
+data <- read.table(file = "../data/DEPDE_2D/DEPDE_2D_data.txt")
 head(data)
 
 # Focus on cases occurred in 2001 (first 2500 cases)

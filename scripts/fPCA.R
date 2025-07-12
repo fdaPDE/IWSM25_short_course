@@ -10,7 +10,7 @@ knitr::opts_chunk$set(
 
 
 ## ----echo=FALSE, out.width = '70%'--------------------------------------------
-knitr::include_graphics("data/fpca/HER2/hist_image.png")
+knitr::include_graphics("../data/fpca/HER2/hist_image.png")
 
 
 ## ----libraries, include=FALSE-------------------------------------------------
@@ -19,7 +19,7 @@ library(fdaPDE2)           # v. 2.0 (2025)
 rm(list = ls())
 
 # Load additional libraries and helper functions for plotting
-source("utils/graphics.R")
+source("../utils/graphics.R")
 
 
 ## ----warning=FALSE, include=FALSE---------------------------------------------
@@ -52,7 +52,7 @@ standard_plot_settings_fields <- function() {
 
 ## ----data, fig.width=8, fig.height=5------------------------------------------
 ## [DATA]
-path_data <- "data/fpca/HER2/"
+path_data <- "../data/fpca/HER2/"
 counts <- as.matrix(read.csv(paste(path_data,"counts.csv",sep=""),
                              row.names=1))
 locations <- read.csv(file=paste(path_data,"locs.csv",sep=""), 
@@ -76,7 +76,7 @@ plot_HER2 <- ggplot() +
 
 
 ## ----echo=FALSE---------------------------------------------------------------
-knitr::include_graphics("data/fpca/HER2/reduced_hist_img.png")
+knitr::include_graphics("../data/fpca/HER2/reduced_hist_img.png")
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -221,7 +221,7 @@ plot_fPCs <- lapply(
 
 
 ## ----echo=FALSE, out.width = '40%'--------------------------------------------
-knitr::include_graphics("data/fpca/HER2/reduced_hist_img.png")
+knitr::include_graphics("../data/fpca/HER2/reduced_hist_img.png")
 
 
 ## ----include=FALSE------------------------------------------------------------

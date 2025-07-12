@@ -4,10 +4,10 @@ author: "Marco Galliani @ fdaPDE Team, MOX, Department of Mathematics, Politecni
 date: ""
 output:
   rmarkdown::html_vignette:
-    css: "utils/mystyle.css"  # Path to your custom CSS file
+    css: "../utils/mystyle.css"  # Path to your custom CSS file
     fig_caption: yes    # Enable figure caption
-bibliography: "utils/references.bib"  # Path to your .bib file with references
-csl: "utils/apa.csl"  # Path to your CSL file (choose your preferred style)
+bibliography: "../utils/references.bib"  # Path to your .bib file with references
+csl: "../utils/apa.csl"  # Path to your CSL file (choose your preferred style)
 vignette: >
   %\VignetteIndexEntry{Functional Principal Component Analysis with Partial Differential Equation Regularization}
   %\VignetteEngine{knitr::rmarkdown}
@@ -40,7 +40,7 @@ The first term encodes the data-fidelity of the estimates using the characterisa
 As a benchmark application, we analyze HER2-positive breast tumor data. This data consist of measurments of gene expression levels over a breast cancer tissue section. Gene expression levels are measured by counting how many times the gene is transcripted at a specific location using spatial transcriptomics techniques. In this analysis we're gonna consider gene expression levels for a single patient.
 
 ```{r, echo=FALSE, out.width = '70%'}
-knitr::include_graphics("data/fpca/HER2/hist_image.png")
+knitr::include_graphics("../data/fpca/HER2/hist_image.png")
 ```
 Histological image of the tissue labelled by a pathologist [@shang2022spatially].
 
@@ -54,7 +54,7 @@ library(fdaPDE2)           # v. 2.0 (2025)
 rm(list = ls())
 
 # Load additional libraries and helper functions for plotting
-source("utils/graphics.R")
+source("../utils/graphics.R")
 ```
 
 ```{r warning=FALSE, include=FALSE}
@@ -89,7 +89,7 @@ In particular, the data preprocessed following the procedure highlighted in [@sh
 
 ```{r data, fig.width=8, fig.height=5}
 ## [DATA]
-path_data <- "data/fpca/HER2/"
+path_data <- "../data/fpca/HER2/"
 counts <- as.matrix(read.csv(paste(path_data,"counts.csv",sep=""),
                              row.names=1))
 locations <- read.csv(file=paste(path_data,"locs.csv",sep=""), 
@@ -118,7 +118,7 @@ plot_HER2 <- ggplot() +
 ::::: {style="display: flex;"}
 ::: {style="flex: 2;"}
 ```{r,  echo=FALSE}
-knitr::include_graphics("data/fpca/HER2/reduced_hist_img.png")
+knitr::include_graphics("../data/fpca/HER2/reduced_hist_img.png")
 ```
 :::
 
@@ -280,7 +280,7 @@ plot_fPCs <- lapply(
 
 
 ```{r, echo=FALSE, out.width = '40%'}
-knitr::include_graphics("data/fpca/HER2/reduced_hist_img.png")
+knitr::include_graphics("../data/fpca/HER2/reduced_hist_img.png")
 ```
 
 ```{r, include=FALSE}

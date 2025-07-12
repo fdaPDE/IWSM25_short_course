@@ -4,10 +4,10 @@ author: "Ilenia Di Battista, Marco F. De Sanctis @ fdaPDE Team, MOX, Department 
 date: ""
 output:
   rmarkdown::html_vignette:
-    css: "utils/mystyle.css"  # Path to your custom CSS file
+    css: "../utils/mystyle.css"  # Path to your custom CSS file
     fig_caption: yes    # Enable figure caption
-bibliography: "utils/references.bib"  # Path to your .bib file with references
-csl: "utils/apa.csl"  # Path to your CSL file (choose your preferred style)
+bibliography: "../utils/references.bib"  # Path to your .bib file with references
+csl: "../utils/apa.csl"  # Path to your CSL file (choose your preferred style)
 vignette: >
   %\VignetteIndexEntry{Quantile Spatial Regression with Partial Differential Equation Regularization}
   %\VignetteEngine{knitr::rmarkdown}
@@ -61,7 +61,7 @@ library(fdaPDE2)           # v. 2.0 (2025)
 rm(list = ls())
 
 # Load additional libraries and helper functions for plotting
-source("utils/graphics.R")
+source("../utils/graphics.R")
 
 ```
 
@@ -80,9 +80,9 @@ Now we build a **regular mesh** of the spatial domain under consideration. We cr
 
 ```{r geometry, fig.width=8, fig.height=5}
 # Import the boundary nodes and segments of the domain of interest
-boundary_nodes    <- read.table(file = "data/QSRPDE_2D/QSRPDE_2D_boundary_nodes.txt",
+boundary_nodes    <- read.table(file = "../data/QSRPDE_2D/QSRPDE_2D_boundary_nodes.txt",
                                 header = TRUE)
-boundary_segments <- read.table(file = "data/QSRPDE_2D/QSRPDE_2D_boundary_segments.txt")
+boundary_segments <- read.table(file = "../data/QSRPDE_2D/QSRPDE_2D_boundary_segments.txt")
  
 # Define a planar straight-line graph modeling the Switzerland boundary
 p <- pslg(
@@ -126,7 +126,7 @@ Figure 1: Regular mesh of the Switzerland domain with $1\,128$ nodes and $2\,077
 We use the triangulation just created to define the spatial support of a `geoframe` object. This object will host layers containing data observed over the spatial support. We load the rainfall data into the object of class `gf`.
 
 ```{r data, fig.width=8, fig.height=5}
-data <- read.table(file = "data/QSRPDE_2D/QSRPDE_2D_data.txt", header=TRUE)
+data <- read.table(file = "../data/QSRPDE_2D/QSRPDE_2D_data.txt", header=TRUE)
 
 gf <- geoframe(domain = switzerland)
 gf$insert(layer = "rainfall", type = "point", geo = c("lon", "lat"), data = data)

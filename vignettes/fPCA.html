@@ -234,7 +234,7 @@ consists of <span class="math inline">\(302\)</span> genes measured at
 <span class="math inline">\(604\)</span> locations over the tissue,
 represented as a bidimensional domain.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="do">## [DATA]</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>path_data <span class="ot">&lt;-</span> <span class="st">&quot;data/fpca/HER2/&quot;</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>path_data <span class="ot">&lt;-</span> <span class="st">&quot;../data/fpca/HER2/&quot;</span></span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>counts <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(<span class="fu">read.csv</span>(<span class="fu">paste</span>(path_data,<span class="st">&quot;counts.csv&quot;</span>,<span class="at">sep=</span><span class="st">&quot;&quot;</span>),</span>
 <span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>                             <span class="at">row.names=</span><span class="dv">1</span>))</span>
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>locations <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="at">file=</span><span class="fu">paste</span>(path_data,<span class="st">&quot;locs.csv&quot;</span>,<span class="at">sep=</span><span class="st">&quot;&quot;</span>), </span>
@@ -438,7 +438,7 @@ gene and reconstruct its activation map using the extracted fPCs.</p>
 <p>Moreover if we look at the score vector related to ERB22 gene, we see
 that fPC1 is strongly activated, coherently to fPC1 interpretation.</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>fpca_m<span class="sc">$</span>scores[idx.HER2,]</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt; [1] 16.1590067 -3.8684650 -0.7241436 -1.1224675 -2.8666076 -0.2892230</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt; [1] 16.1590067 -3.8684650 -0.7241436 -1.1224675 -2.8666076 -0.2892091</span></span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a></span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>labels <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;fPC&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>)</span>
 <span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="fu">barplot</span>(fpca_m<span class="sc">$</span>scores[idx.HER2,<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>],</span>
